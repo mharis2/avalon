@@ -1,0 +1,78 @@
+.assassination-card {
+    max-width: 500px;
+    width: 100%;
+    padding: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    text-align: center;
+    border-color: rgba(255, 79, 109, 0.2);
+}
+
+.assassination-icon {
+    font-size: 4rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.assassination-title {
+    font-size: 1.8rem;
+    color: var(--evil-primary);
+}
+
+.assassination-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.assassination-waiting {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.assassination-targets {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.assassination-target {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.assassination-target:not(:disabled):hover {
+    border-color: var(--evil-primary);
+    background: var(--evil-bg);
+}
+
+.assassination-target-selected {
+    border-color: var(--evil-primary) !important;
+    background: var(--evil-bg) !important;
+    box-shadow: var(--shadow-glow-evil);
+}
+
+.assassination-target-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+}

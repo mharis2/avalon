@@ -1,0 +1,89 @@
+.vote-history {
+    width: 100%;
+}
+
+.vote-history-title {
+    font-size: 1.1rem;
+    color: var(--accent-gold);
+    margin-bottom: var(--space-lg);
+}
+
+.vote-history-empty {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.vote-history-quest {
+    margin-bottom: var(--space-lg);
+}
+
+.vote-history-quest-title {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.vote-history-entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.vote-history-entry {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.vote-history-approved {
+    border-left: 3px solid var(--good-primary);
+}
+
+.vote-history-rejected {
+    border-left: 3px solid var(--evil-primary);
+}
+
+.vote-history-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xs);
+}
+
+.vote-history-leader {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.vote-history-team {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.vote-history-votes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.vote-history-vote {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+.vote-history-vote-approve {
+    background: var(--good-bg);
+    color: var(--good-primary);
+}
+
+.vote-history-vote-reject {
+    background: var(--evil-bg);
+    color: var(--evil-primary);
+}

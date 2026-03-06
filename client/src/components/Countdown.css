@@ -1,0 +1,28 @@
+.countdown-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+}
+
+.countdown-number {
+    font-family: var(--font-display);
+    font-size: 10rem;
+    font-weight: 900;
+    color: var(--accent-gold);
+    text-shadow: 0 0 60px var(--accent-gold-glow), 0 0 120px rgba(255, 215, 0, 0.2);
+    animation: countdownPop 0.8s ease forwards;
+    user-select: none;
+}
+
+.countdown-ring {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50%;
+    animation: countdownFade 1s ease forwards;
+}

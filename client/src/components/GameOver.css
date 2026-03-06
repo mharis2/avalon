@@ -1,0 +1,134 @@
+.gameover-card {
+    max-width: 560px;
+    width: 100%;
+    padding: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xl);
+    text-align: center;
+}
+
+.gameover-good {
+    border-color: rgba(79, 140, 255, 0.3);
+    box-shadow: var(--shadow-glow-good);
+}
+
+.gameover-evil {
+    border-color: rgba(255, 79, 109, 0.3);
+    box-shadow: var(--shadow-glow-evil);
+}
+
+.gameover-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.gameover-icon {
+    font-size: 4rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.gameover-title {
+    font-size: 2.4rem;
+}
+
+.gameover-good .gameover-title {
+    background: linear-gradient(135deg, var(--good-primary), #88bbff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.gameover-evil .gameover-title {
+    background: linear-gradient(135deg, var(--evil-primary), #ff8899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.gameover-reason {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.gameover-reveal {
+    width: 100%;
+}
+
+.gameover-reveal-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-md);
+}
+
+.gameover-players {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.gameover-player {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    animation: fadeInUp 0.3s ease forwards;
+}
+
+.gameover-player-good {
+    background: var(--good-bg);
+}
+
+.gameover-player-evil {
+    background: var(--evil-bg);
+}
+
+.gameover-player-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.gameover-avatar-good {
+    background: linear-gradient(135deg, var(--good-primary), var(--good-secondary));
+}
+
+.gameover-avatar-evil {
+    background: linear-gradient(135deg, var(--evil-primary), var(--evil-secondary));
+}
+
+.gameover-player-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+}
+
+.gameover-player-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.gameover-assassination-marker {
+    font-size: 1.2rem;
+}
+
+.gameover-waiting {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    animation: pulse 2s ease-in-out infinite;
+}

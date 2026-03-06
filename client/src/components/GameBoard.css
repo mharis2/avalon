@@ -1,0 +1,684 @@
+.gameboard {
+    min-height: 100vh;
+    padding: var(--space-md);
+    padding-bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ─── Top Bar ──────────────────────────────────────────────────────── */
+.gb-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+}
+
+.gb-topbar-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.gb-role-badge-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-xs);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    font-family: var(--font-body);
+}
+
+.gb-role-badge-btn:hover {
+    background: var(--bg-card);
+}
+
+.gb-peek-hint {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+
+.gb-end-btn {
+    color: var(--evil-primary) !important;
+    border-color: rgba(255, 79, 109, 0.2) !important;
+}
+
+.gb-end-btn:hover {
+    background: var(--evil-bg) !important;
+}
+
+/* ─── Role Card Peek ───────────────────────────────────────────────── */
+.gb-role-peek {
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.gb-role-peek-good {
+    border-color: rgba(79, 140, 255, 0.2);
+}
+
+.gb-role-peek-evil {
+    border-color: rgba(255, 79, 109, 0.2);
+}
+
+.gb-role-peek-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.gb-role-peek-icon {
+    font-size: 1.8rem;
+}
+
+.gb-role-peek-desc {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.gb-role-peek-known {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.gb-role-peek-player {
+    font-size: 0.75rem;
+    padding: 2px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+}
+
+/* ─── Scoreboard ───────────────────────────────────────────────────── */
+.gb-scoreboard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+}
+
+.gb-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    min-width: 100px;
+}
+
+.gb-score-good {
+    background: var(--good-bg);
+    border: 1px solid rgba(79, 140, 255, 0.2);
+}
+
+.gb-score-evil {
+    background: var(--evil-bg);
+    border: 1px solid rgba(255, 79, 109, 0.2);
+}
+
+.gb-score-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+
+.gb-score-value {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.gb-score-good .gb-score-value {
+    color: var(--good-primary);
+}
+
+.gb-score-evil .gb-score-value {
+    color: var(--evil-primary);
+}
+
+.gb-score-need {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+
+.gb-score-vs {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+/* ─── Quest Tracker ────────────────────────────────────────────────── */
+.gb-quest-tracker {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+}
+
+.gb-quest-dot {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border-medium);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all var(--transition-base);
+}
+
+.gb-quest-current {
+    border-color: var(--accent-gold);
+    box-shadow: var(--shadow-glow-gold);
+    animation: glow 2s ease-in-out infinite;
+}
+
+.gb-quest-pass {
+    border-color: var(--good-primary);
+    background: var(--good-bg);
+    box-shadow: var(--shadow-glow-good);
+}
+
+.gb-quest-fail {
+    border-color: var(--evil-primary);
+    background: var(--evil-bg);
+    box-shadow: var(--shadow-glow-evil);
+}
+
+.gb-quest-number {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.gb-quest-size {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+}
+
+.gb-quest-result-icon {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    font-size: 0.8rem;
+    background: var(--bg-primary);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ─── Rejection Tracker ────────────────────────────────────────────── */
+.gb-rejection-tracker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.gb-rejection-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.gb-rejection-pips {
+    display: flex;
+    gap: 6px;
+}
+
+.gb-rejection-pip {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    transition: all var(--transition-base);
+}
+
+.gb-rejection-pip-active {
+    background: var(--evil-primary);
+    border-color: var(--evil-primary);
+    box-shadow: 0 0 8px var(--evil-glow);
+}
+
+.gb-rejection-warning {
+    font-size: 0.7rem;
+    color: var(--evil-primary);
+    font-weight: 600;
+    animation: pulse 1.5s ease-in-out infinite;
+    width: 100%;
+    text-align: center;
+}
+
+/* ─── Phase Tip ────────────────────────────────────────────────────── */
+.gb-phase-tip {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+}
+
+.gb-phase-tip-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-gold);
+    font-weight: 700;
+}
+
+.gb-phase-tip-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: 2px;
+}
+
+/* ─── Turn Info ────────────────────────────────────────────────────── */
+.gb-turn-info {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.gb-turn-info strong {
+    color: var(--accent-gold);
+}
+
+/* ─── Players ──────────────────────────────────────────────────────── */
+.gb-players {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.gb-player-chip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.gb-player-chip:disabled {
+    cursor: default;
+}
+
+.gb-player-chip:not(:disabled):hover {
+    border-color: var(--border-strong);
+    background: var(--bg-card-hover);
+}
+
+.gb-player-selected {
+    border-color: var(--accent-gold) !important;
+    background: rgba(255, 215, 0, 0.08) !important;
+    box-shadow: 0 0 12px var(--accent-gold-glow);
+}
+
+.gb-player-on-team {
+    border-color: var(--good-primary) !important;
+    background: var(--good-bg) !important;
+}
+
+.gb-player-me {
+    font-weight: 600;
+}
+
+.gb-player-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--good-primary), var(--good-secondary));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.7rem;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.gb-leader-crown {
+    position: absolute;
+    top: -10px;
+    font-size: 0.7rem;
+}
+
+.gb-player-name {
+    white-space: nowrap;
+}
+
+.gb-team-marker {
+    font-size: 0.8rem;
+}
+
+/* ─── Action Panel ─────────────────────────────────────────────────── */
+.gb-action-panel {
+    padding: var(--space-xl);
+    text-align: center;
+    margin-top: auto;
+}
+
+.gb-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.gb-action-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--text-accent);
+}
+
+.gb-action-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ─── Result Cards ─────────────────────────────────────────────────── */
+.result-card {
+    max-width: 500px;
+    width: 100%;
+    padding: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    text-align: center;
+}
+
+.result-title {
+    font-size: 1.6rem;
+}
+
+.result-pass {
+    color: var(--good-primary);
+}
+
+.result-fail {
+    color: var(--evil-primary);
+}
+
+.result-votes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.result-vote-chip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 500;
+    animation: fadeInUp 0.3s ease forwards;
+}
+
+.result-vote-approve {
+    background: var(--good-bg);
+    border: 1px solid rgba(79, 140, 255, 0.3);
+    color: var(--good-primary);
+}
+
+.result-vote-reject {
+    background: var(--evil-bg);
+    border: 1px solid rgba(255, 79, 109, 0.3);
+    color: var(--evil-primary);
+}
+
+.result-vote-name {
+    font-weight: 600;
+}
+
+.result-rejection-info {
+    color: var(--evil-primary);
+    font-size: 0.85rem;
+}
+
+.result-danger {
+    font-weight: 700;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.result-info {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.result-quest-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.result-card-stack {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.result-card-item {
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.result-card-success {
+    background: var(--good-bg);
+    border: 1px solid rgba(79, 140, 255, 0.3);
+    color: var(--good-primary);
+}
+
+.result-card-fail {
+    background: var(--evil-bg);
+    border: 1px solid rgba(255, 79, 109, 0.3);
+    color: var(--evil-primary);
+}
+
+.result-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ─── Result Timer Bar ─────────────────────────────────────────────────────── */
+.result-timer-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border-subtle);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.result-timer-fill {
+    height: 100%;
+    background: var(--accent-gold);
+    border-radius: var(--radius-full);
+    animation: shrinkBar linear forwards;
+}
+
+@keyframes shrinkBar {
+    from {
+        width: 100%;
+    }
+
+    to {
+        width: 0%;
+    }
+}
+
+.result-timer-text {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* ─── Result Progress ──────────────────────────────────────────────── */
+.result-progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    width: 100%;
+}
+
+.result-progress-item {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.result-progress-good {
+    background: var(--good-bg);
+    color: var(--good-primary);
+    border: 1px solid rgba(79, 140, 255, 0.15);
+}
+
+.result-progress-evil {
+    background: var(--evil-bg);
+    color: var(--evil-primary);
+    border: 1px solid rgba(255, 79, 109, 0.15);
+}
+
+.gb-action-note {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ─── Overlay / Modal ──────────────────────────────────────────────── */
+.gb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: var(--bg-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    animation: fadeIn 0.2s ease;
+}
+
+.gb-overlay-content {
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+@media (max-width: 600px) {
+    .gameboard {
+        padding: var(--space-sm);
+        padding-bottom: 72px;
+    }
+
+    .gb-quest-dot {
+        width: 44px;
+        height: 44px;
+    }
+
+    .gb-quest-number {
+        font-size: 0.85rem;
+    }
+
+    .gb-quest-size {
+        font-size: 0.5rem;
+    }
+
+    .gb-quest-tracker {
+        gap: var(--space-sm);
+    }
+
+    .gb-player-chip {
+        font-size: 0.8rem;
+        padding: 8px 14px;
+        min-height: 44px;
+    }
+
+    .gb-score {
+        padding: var(--space-xs) var(--space-md);
+        min-width: 80px;
+    }
+
+    .gb-score-value {
+        font-size: 1.1rem;
+    }
+
+    .gb-phase-tip-text {
+        font-size: 0.75rem;
+    }
+
+    .gb-action-panel {
+        padding: var(--space-lg);
+    }
+
+    .gb-topbar {
+        padding: var(--space-xs) 0;
+    }
+
+    .result-card {
+        padding: var(--space-lg);
+        margin: var(--space-md);
+    }
+
+    .result-title {
+        font-size: 1.2rem;
+    }
+
+    .result-vote-chip {
+        font-size: 0.78rem;
+        padding: 6px 10px;
+    }
+
+    .btn-lg {
+        padding: 14px 28px !important;
+        font-size: 0.95rem !important;
+        min-height: 48px;
+    }
+
+    .voting-btn {
+        min-width: 120px;
+        min-height: 48px;
+    }
+
+    .quest-card {
+        min-width: 110px;
+        min-height: 130px;
+    }
+}

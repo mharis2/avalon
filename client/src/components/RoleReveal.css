@@ -1,0 +1,112 @@
+.role-reveal-card {
+    max-width: 480px;
+    width: 100%;
+    padding: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    text-align: center;
+}
+
+.role-reveal-good {
+    border-color: rgba(79, 140, 255, 0.2);
+    box-shadow: var(--shadow-glow-good);
+}
+
+.role-reveal-evil {
+    border-color: rgba(255, 79, 109, 0.2);
+    box-shadow: var(--shadow-glow-evil);
+}
+
+.role-reveal-icon {
+    font-size: 4rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.role-reveal-name {
+    font-size: 2.2rem;
+    background: linear-gradient(135deg, var(--text-accent), var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.role-reveal-good .role-reveal-name {
+    background: linear-gradient(135deg, var(--good-primary), #88bbff);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.role-reveal-evil .role-reveal-name {
+    background: linear-gradient(135deg, var(--evil-primary), #ff8899);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.role-reveal-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    max-width: 380px;
+}
+
+.role-reveal-known {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: center;
+}
+
+.role-reveal-known-player {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--good-bg);
+    border: 1px solid rgba(79, 140, 255, 0.2);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.role-reveal-known-evil {
+    background: var(--evil-bg);
+    border-color: rgba(255, 79, 109, 0.2);
+}
+
+.role-reveal-known-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.role-reveal-btn {
+    margin-top: var(--space-md);
+    width: 100%;
+}
+
+.role-reveal-warning {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.role-reveal-waiting {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+    padding: var(--space-md) 0;
+}
+
+.role-reveal-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}

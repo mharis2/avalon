@@ -1,0 +1,108 @@
+/* ─── Bottom Buttons Container ─────────────────────────────────── */
+.global-bottom-buttons {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 800;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.global-rules-btn,
+.global-minigame-btn {
+    font-size: 0.75rem !important;
+    padding: 10px 20px !important;
+    background: rgba(15, 17, 28, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 999px !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600 !important;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.global-rules-btn {
+    color: var(--accent-gold) !important;
+    border-color: rgba(255, 215, 0, 0.2) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 215, 0, 0.06);
+}
+
+.global-rules-btn:hover {
+    background: rgba(25, 28, 45, 0.95) !important;
+    border-color: rgba(255, 215, 0, 0.4) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.global-minigame-btn {
+    color: var(--good-primary) !important;
+    border-color: rgba(79, 140, 255, 0.2) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(79, 140, 255, 0.06);
+}
+
+.global-minigame-btn:hover {
+    background: rgba(25, 28, 45, 0.95) !important;
+    border-color: rgba(79, 140, 255, 0.4) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 20px rgba(79, 140, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.global-toggle-minigame-btn {
+    color: var(--evil-primary) !important;
+    border-color: rgba(255, 79, 109, 0.2) !important;
+    font-size: 0.65rem !important;
+    padding: 8px 14px !important;
+}
+
+.global-toggle-minigame-btn:hover {
+    background: rgba(25, 28, 45, 0.95) !important;
+    border-color: rgba(255, 79, 109, 0.4) !important;
+}
+
+.global-toggle-minigame-btn.minigame-disabled {
+    color: var(--success) !important;
+    border-color: rgba(34, 197, 94, 0.2) !important;
+}
+
+.global-toggle-minigame-btn.minigame-disabled:hover {
+    border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+/* Toast notification */
+.minigame-disabled-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 950;
+    background: rgba(15, 17, 28, 0.92);
+    border: 1px solid rgba(255, 79, 109, 0.3);
+    color: var(--text-primary);
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .global-bottom-buttons {
+        bottom: 12px;
+        gap: 6px;
+    }
+
+    .global-rules-btn,
+    .global-minigame-btn {
+        font-size: 0.65rem !important;
+        padding: 8px 14px !important;
+    }
+}

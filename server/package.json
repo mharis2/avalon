@@ -1,0 +1,16 @@
+{
+  "name": "avalon-server",
+  "version": "1.0.0",
+  "description": "The Resistance: Avalon - Multiplayer Game Server",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "nanoid": "^3.3.7",
+    "socket.io": "^4.7.4"
+  }
+}
