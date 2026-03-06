@@ -85,16 +85,24 @@ class Room {
         const newVal = !this.enabledRoles[roleKey];
         this.enabledRoles[roleKey] = newVal;
 
-        // Enforce Merlin ↔ Assassin pairing
-        if (roleKey === 'merlin') this.enabledRoles.assassin = newVal;
-        if (roleKey === 'assassin') this.enabledRoles.merlin = newVal;
-
-        // Enforce Percival → Morgana (Percival needs Morgana to be meaningful)
-        if (roleKey === 'percival' && newVal) {
-            this.enabledRoles.morgana = true;
+        // Dependencies:
+        if (roleKey === 'merlin') {
+            this.enabledRoles.assassin = newVal;
+            if (!newVal) this.enabledRoles.percival = false; // Percival needs Merlin
         }
-        // If Morgana is turned off, Percival must be turned off too
+        if (roleKey === 'assassin') {
+            this.enabledRoles.merlin = newVal;
+            if (!newVal) this.enabledRoles.percival = false;
+        }
+
+        if (roleKey === 'percival' && newVal) {
+            // Percival needs Morgana, Merlin, and Assassin
+            this.enabledRoles.morgana = true;
+            this.enabledRoles.merlin = true;
+            this.enabledRoles.assassin = true;
+        }
         if (roleKey === 'morgana' && !newVal) {
+            // If Morgana is off, Percival must be off
             this.enabledRoles.percival = false;
         }
     }

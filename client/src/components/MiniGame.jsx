@@ -5,8 +5,8 @@ const CANVAS_W = 320;
 const CANVAS_H = 480;
 
 // Physics
-const GRAVITY = 0.25;
-const FLAP_STRENGTH = -6;
+const GRAVITY = 0.45;
+const FLAP_STRENGTH = -7;
 const SKULL_SIZE = 28;
 
 // Pipes

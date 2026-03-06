@@ -71,7 +71,7 @@ function AppContent() {
                 <div className="global-bottom-buttons">
                     {miniGameEnabled && (
                         <button className="global-minigame-btn btn btn-ghost btn-sm" onClick={() => setShowMiniGame(true)}>
-                            🎮 Bored? Tap me for some brainrot
+                            🎮 Bored? Play Brainrot
                         </button>
                     )}
                     {isHost && (
@@ -80,7 +80,7 @@ function AppContent() {
                             onClick={() => toggleMiniGame()}
                             title={miniGameEnabled ? 'Disable mini-game for all players' : 'Enable mini-game for all players'}
                         >
-                            {miniGameEnabled ? '🚫 Disable Game' : '✅ Enable Game'}
+                            {miniGameEnabled ? '🚫 Off' : '✅ On'}
                         </button>
                     )}
                     <button className="global-rules-btn btn btn-ghost btn-sm" onClick={() => setShowRules(true)}>

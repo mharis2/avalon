@@ -9,12 +9,17 @@ const PLAYER_DISTRIBUTION = {
 
 const ROLE_INFO = {
     merlin: { name: 'Merlin', team: 'good', desc: 'Knows evil players (except Mordred)' },
+    percival: { name: 'Percival', team: 'good', desc: 'Sees Merlin and Morgana', dep: 'Enables Morgana & Merlin' },
     assassin: { name: 'Assassin', team: 'evil', desc: 'Can kill Merlin if Good wins' },
-    percival: { name: 'Percival', team: 'good', desc: 'Sees Merlin and Morgana', dep: 'Enables Morgana' },
     morgana: { name: 'Morgana', team: 'evil', desc: 'Appears as Merlin to Percival', dep: 'Needed for Percival' },
     mordred: { name: 'Mordred', team: 'evil', desc: 'Hidden from Merlin' },
     oberon: { name: 'Oberon', team: 'evil', desc: 'Unknown to other evil players' },
 };
+
+const DEFAULT_ROLES = [
+    { key: 'loyal', name: 'Loyal Servant', team: 'good', desc: 'Default Good player. No special abilities.' },
+    { key: 'minion', name: 'Minion of Mordred', team: 'evil', desc: 'Default Evil player. Knows other evil (except Oberon).' },
+];
 
 export default function Lobby() {
     const { players, enabledRoles, roomCode, isHost, toggleRole, startGame, hostId } = useGame();
@@ -85,6 +90,29 @@ export default function Lobby() {
                         {isHost ? 'Tap to toggle optional characters' : 'Host controls character selection'}
                     </p>
                     <div className="lobby-roles">
+                        {/* Default roles (always on) */}
+                        {DEFAULT_ROLES.map((info) => (
+                            <button
+                                key={info.key}
+                                className={`lobby-role lobby-role-active lobby-role-locked ${info.team === 'good' ? 'lobby-role-good' : 'lobby-role-evil'}`}
+                                disabled={true}
+                                title={info.desc}
+                            >
+                                <div className="lobby-role-header">
+                                    <span className="lobby-role-name">{info.name}</span>
+                                    <span className={`badge ${info.team === 'good' ? 'badge-good' : 'badge-evil'}`}>
+                                        {info.team}
+                                    </span>
+                                </div>
+                                <p className="lobby-role-desc">{info.desc}</p>
+                                <p className="lobby-role-dep">🔒 Always Enabled</p>
+                                <div className="lobby-role-toggle lobby-role-toggle-on lobby-role-toggle-locked">
+                                    <div className="lobby-role-toggle-dot" />
+                                </div>
+                            </button>
+                        ))}
+
+                        {/* Optional roles */}
                         {Object.entries(ROLE_INFO).map(([key, info]) => {
                             const enabled = enabledRoles[key];
                             return (

@@ -6,8 +6,11 @@
     transform: translateX(-50%);
     z-index: 800;
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 8px;
     align-items: center;
+    width: 90%;
 }
 
 .global-rules-btn,
@@ -98,11 +101,17 @@
     .global-bottom-buttons {
         bottom: 12px;
         gap: 6px;
+        width: 100%;
+        padding: 0 10px;
     }
 
     .global-rules-btn,
-    .global-minigame-btn {
+    .global-minigame-btn,
+    .global-toggle-minigame-btn {
         font-size: 0.65rem !important;
-        padding: 8px 14px !important;
+        padding: 8px 12px !important;
+        white-space: normal;
+        text-align: center;
+        line-height: +1.2;
     }
 }

@@ -133,7 +133,7 @@
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     font-family: var(--font-body);
     color: var(--text-primary);
 }
@@ -147,14 +147,31 @@
     background: var(--bg-card-hover);
 }
 
+.lobby-role-active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
 .lobby-role-active.lobby-role-good {
-    border-color: rgba(79, 140, 255, 0.3);
-    background: var(--good-bg);
+    border-color: rgba(79, 140, 255, 0.8);
+    background: linear-gradient(180deg, rgba(79, 140, 255, 0.15), rgba(79, 140, 255, 0.05));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 15px rgba(79, 140, 255, 0.15);
 }
 
 .lobby-role-active.lobby-role-evil {
-    border-color: rgba(255, 79, 109, 0.3);
-    background: var(--evil-bg);
+    border-color: rgba(255, 79, 109, 0.8);
+    background: linear-gradient(180deg, rgba(255, 79, 109, 0.15), rgba(255, 79, 109, 0.05));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 15px rgba(255, 79, 109, 0.15);
+}
+
+.lobby-role-locked {
+    opacity: 0.85;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+.lobby-role-locked:hover {
+    background: var(--bg-secondary) !important;
 }
 
 .lobby-role-header {
@@ -206,6 +223,10 @@
 
 .lobby-role-toggle-on .lobby-role-toggle-dot {
     transform: translateX(14px);
+}
+
+.lobby-role-toggle-locked {
+    opacity: 0.5;
 }
 
 .lobby-start {
