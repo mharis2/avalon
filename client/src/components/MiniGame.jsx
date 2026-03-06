@@ -5,15 +5,15 @@ const CANVAS_W = 320;
 const CANVAS_H = 480;
 
 // Physics
-const GRAVITY = 0.45;
-const FLAP_STRENGTH = -7;
+const GRAVITY = 0.55;
+const FLAP_STRENGTH = -8;
 const SKULL_SIZE = 28;
 
 // Pipes
 const PIPE_WIDTH = 48;
-const PIPE_GAP = 155;
-const PIPE_SPEED = 2.75;
-const PIPE_SPAWN_INTERVAL = 90; // frames
+const PIPE_GAP = 145;
+const PIPE_SPEED = 3.5;
+const PIPE_SPAWN_INTERVAL = 75; // frames
 
 // Colors matching Avalon theme
 const COLORS = {
@@ -33,6 +33,7 @@ export default function MiniGame({ onClose, highScore, onNewHighScore }) {
     const canvasRef = useRef(null);
     const gameStateRef = useRef(null);
     const animFrameRef = useRef(null);
+    const lastFlapRef = useRef(0);
     const [displayScore, setDisplayScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [started, setStarted] = useState(false);
@@ -54,7 +55,13 @@ export default function MiniGame({ onClose, highScore, onNewHighScore }) {
     }, []);
 
     // Flap action
-    const flap = useCallback(() => {
+    const flap = useCallback((e) => {
+        if (e && e.preventDefault) e.preventDefault();
+
+        const now = Date.now();
+        if (now - lastFlapRef.current < 80) return; // debounce to prevent double fast fires/ghost clicks
+        lastFlapRef.current = now;
+
         const gs = gameStateRef.current;
         if (!gs) return;
 
@@ -373,8 +380,8 @@ export default function MiniGame({ onClose, highScore, onNewHighScore }) {
                     width={CANVAS_W}
                     height={CANVAS_H}
                     className="minigame-canvas"
-                    onClick={flap}
-                    onTouchStart={(e) => { e.preventDefault(); flap(); }}
+                    style={{ touchAction: 'none' }}
+                    onPointerDown={flap}
                 />
 
                 {/* Footer hint */}
