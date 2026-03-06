@@ -8,7 +8,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 8px;
+    gap: 12px;
     align-items: center;
     width: 90%;
 }
@@ -99,19 +99,21 @@
 
 @media (max-width: 600px) {
     .global-bottom-buttons {
-        bottom: 12px;
-        gap: 6px;
+        bottom: 16px;
+        gap: 8px;
         width: 100%;
-        padding: 0 10px;
+        padding: 0 12px;
     }
 
     .global-rules-btn,
     .global-minigame-btn,
     .global-toggle-minigame-btn {
-        font-size: 0.65rem !important;
-        padding: 8px 12px !important;
+        font-size: 0.72rem !important;
+        padding: 12px 14px !important;
         white-space: normal;
         text-align: center;
-        line-height: +1.2;
+        line-height: +1.3;
+        min-height: 48px;
+        /* minimum target size for iOS/Android accessibility */
     }
 }

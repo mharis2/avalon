@@ -63,6 +63,8 @@ class Room {
         if (this.players.find(p => p.name.toLowerCase() === player.name.toLowerCase())) {
             throw new Error('Name already taken');
         }
+
+        player.connected = true; // Track connection status
         this.players.push(player);
     }
 

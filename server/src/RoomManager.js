@@ -7,6 +7,7 @@ class RoomManager {
     constructor() {
         this.rooms = new Map();           // code → Room
         this.playerRoomMap = new Map();   // socketId → { roomCode, playerId }
+        this.deletionTimers = new Map();  // code → Timeout
     }
 
     createRoom(hostPlayer, socketId) {
@@ -19,6 +20,11 @@ class RoomManager {
         this.rooms.set(code, room);
         this.playerRoomMap.set(socketId, { roomCode: code, playerId: hostPlayer.id });
 
+        if (this.deletionTimers.has(code)) {
+            clearTimeout(this.deletionTimers.get(code));
+            this.deletionTimers.delete(code);
+        }
+
         return room;
     }
 
@@ -28,6 +34,11 @@ class RoomManager {
 
         room.addPlayer(player);
         this.playerRoomMap.set(socketId, { roomCode: code.toUpperCase(), playerId: player.id });
+
+        if (this.deletionTimers.has(code.toUpperCase())) {
+            clearTimeout(this.deletionTimers.get(code.toUpperCase()));
+            this.deletionTimers.delete(code.toUpperCase());
+        }
 
         return room;
     }
@@ -42,13 +53,25 @@ class RoomManager {
             return null;
         }
 
-        room.removePlayer(mapping.playerId);
+        // Mark player disconnected instead of removing them completely
+        const player = room.getPlayer(mapping.playerId);
+        if (player) {
+            player.connected = false;
+        }
+
         this.playerRoomMap.delete(socketId);
 
-        // Cleanup empty rooms
-        if (room.players.length === 0) {
-            this.rooms.delete(mapping.roomCode);
-            return { room: null, removed: true, roomCode: mapping.roomCode };
+        // Check if everyone is disconnected
+        const allDisconnected = room.players.every(p => !p.connected);
+
+        if (allDisconnected) {
+            // Schedule room deletion after 5 minutes (300,000 ms)
+            const timer = setTimeout(() => {
+                this.rooms.delete(mapping.roomCode);
+                this.deletionTimers.delete(mapping.roomCode);
+                console.log(`[RoomManager] Deleted empty room ${mapping.roomCode}`);
+            }, 300000);
+            this.deletionTimers.set(mapping.roomCode, timer);
         }
 
         return { room, removed: false, roomCode: mapping.roomCode };
@@ -78,7 +101,20 @@ class RoomManager {
             }
         }
         this.playerRoomMap.set(newSocketId, { roomCode, playerId });
-        return this.rooms.get(roomCode);
+
+        const room = this.rooms.get(roomCode);
+        if (room) {
+            const player = room.getPlayer(playerId);
+            if (player) player.connected = true;
+
+            // Cancel deletion timer since someone connected
+            if (this.deletionTimers.has(roomCode)) {
+                clearTimeout(this.deletionTimers.get(roomCode));
+                this.deletionTimers.delete(roomCode);
+            }
+        }
+
+        return room;
     }
 }
 

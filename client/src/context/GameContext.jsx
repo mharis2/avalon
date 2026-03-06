@@ -105,7 +105,47 @@ export function GameProvider({ children }) {
     stateRef.current = state;
 
     useEffect(() => {
-        socket.on('connect', () => dispatch({ type: 'SET_CONNECTED', payload: true }));
+        socket.on('connect', () => {
+            dispatch({ type: 'SET_CONNECTED', payload: true });
+
+            // Auto-reconnect if we have old state credentials or localStorage from a swipe-out
+            let { roomCode, playerId } = stateRef.current;
+
+            if (!roomCode || !playerId) {
+                try {
+                    const saved = localStorage.getItem('avalonSession');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (parsed && parsed.roomCode && parsed.playerId) {
+                            roomCode = parsed.roomCode;
+                            playerId = parsed.playerId;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to parse localStorage session', e);
+                }
+            }
+
+            if (roomCode && playerId) {
+                socket.emit('reconnect-player', { roomCode, playerId }, (res) => {
+                    if (res && res.success) {
+                        dispatch({ type: 'UPDATE_STATE', payload: res.state });
+                        if (res.roleInfo) {
+                            dispatch({ type: 'SET_ROLE_INFO', payload: res.roleInfo });
+                        }
+                        // Update stateRefs
+                        stateRef.current.roomCode = roomCode;
+                        stateRef.current.playerId = playerId;
+                    } else {
+                        // Reconnect failed (room deleted or player kicked)
+                        localStorage.removeItem('avalonSession');
+                        dispatch({ type: 'RESET' });
+                        dispatch({ type: 'SET_ERROR', payload: 'Room was closed due to inactivity.' });
+                    }
+                });
+            }
+        });
+
         socket.on('disconnect', () => dispatch({ type: 'SET_CONNECTED', payload: false }));
 
         socket.on('player-joined', ({ state: s }) => {
@@ -183,6 +223,7 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_QUEST_RESULT', payload: null });
             dispatch({ type: 'SET_ASSASSINATION_RESULT', payload: null });
             dispatch({ type: 'CLEAR_SHOWING_RESULT' });
+            localStorage.removeItem('avalonSession'); // Clear session on full reset
         });
 
         socket.on('minigame-toggled', ({ miniGameEnabled }) => {
@@ -218,6 +259,7 @@ export function GameProvider({ children }) {
                 dispatch({ type: 'SET_PLAYER', payload: { playerId: res.playerId, playerName } });
                 dispatch({ type: 'SET_ROOM', payload: res.roomCode });
                 dispatch({ type: 'UPDATE_STATE', payload: res.state });
+                localStorage.setItem('avalonSession', JSON.stringify({ roomCode: res.roomCode, playerId: res.playerId }));
             }
             cb?.(res);
         });
@@ -229,6 +271,7 @@ export function GameProvider({ children }) {
                 dispatch({ type: 'SET_PLAYER', payload: { playerId: res.playerId, playerName } });
                 dispatch({ type: 'SET_ROOM', payload: res.roomCode });
                 dispatch({ type: 'UPDATE_STATE', payload: res.state });
+                localStorage.setItem('avalonSession', JSON.stringify({ roomCode: res.roomCode, playerId: res.playerId }));
             }
             cb?.(res);
         });

@@ -12,8 +12,8 @@ const SKULL_SIZE = 28;
 // Pipes
 const PIPE_WIDTH = 48;
 const PIPE_GAP = 155;
-const PIPE_SPEED = 2.0;
-const PIPE_SPAWN_INTERVAL = 120; // frames
+const PIPE_SPEED = 2.75;
+const PIPE_SPAWN_INTERVAL = 90; // frames
 
 // Colors matching Avalon theme
 const COLORS = {
@@ -253,13 +253,14 @@ export default function MiniGame({ onClose, highScore, onNewHighScore }) {
                 ctx.globalAlpha = 1;
             }
 
-            // Skull
+            // Skull (Safari explicit color reset)
             ctx.save();
             ctx.translate(gs.skull.x, gs.skull.y);
             ctx.rotate((gs.skull.rotation * Math.PI) / 180);
             ctx.font = `${SKULL_SIZE}px serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff'; // explicitly reset so Safari doesn't inherit pipe gradients on emoji
             ctx.fillText('💀', 0, 0);
             ctx.restore();
 
