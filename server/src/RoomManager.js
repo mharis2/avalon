@@ -65,12 +65,12 @@ class RoomManager {
         const allDisconnected = room.players.every(p => !p.connected);
 
         if (allDisconnected) {
-            // Schedule room deletion after 5 minutes (300,000 ms)
+            // Schedule room deletion after 10 minutes (600,000 ms)
             const timer = setTimeout(() => {
                 this.rooms.delete(mapping.roomCode);
                 this.deletionTimers.delete(mapping.roomCode);
                 console.log(`[RoomManager] Deleted empty room ${mapping.roomCode}`);
-            }, 300000);
+            }, 600000);
             this.deletionTimers.set(mapping.roomCode, timer);
         }
 

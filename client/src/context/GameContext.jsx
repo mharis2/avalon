@@ -129,6 +129,11 @@ export function GameProvider({ children }) {
             if (roomCode && playerId) {
                 socket.emit('reconnect-player', { roomCode, playerId }, (res) => {
                     if (res && res.success) {
+                        dispatch({ type: 'SET_ROOM', payload: roomCode });
+                        const me = res.state.players.find(p => p.id === playerId);
+                        if (me) {
+                            dispatch({ type: 'SET_PLAYER', payload: { playerId, playerName: me.name } });
+                        }
                         dispatch({ type: 'UPDATE_STATE', payload: res.state });
                         if (res.roleInfo) {
                             dispatch({ type: 'SET_ROLE_INFO', payload: res.roleInfo });
@@ -223,7 +228,6 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_QUEST_RESULT', payload: null });
             dispatch({ type: 'SET_ASSASSINATION_RESULT', payload: null });
             dispatch({ type: 'CLEAR_SHOWING_RESULT' });
-            localStorage.removeItem('avalonSession'); // Clear session on full reset
         });
 
         socket.on('minigame-toggled', ({ miniGameEnabled }) => {
