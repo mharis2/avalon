@@ -88,24 +88,29 @@ class Room {
         this.enabledRoles[roleKey] = newVal;
 
         // Dependencies:
-        if (roleKey === 'merlin') {
-            this.enabledRoles.assassin = newVal;
-            if (!newVal) this.enabledRoles.percival = false; // Percival needs Merlin
-        }
-        if (roleKey === 'assassin') {
+        if (roleKey === 'merlin' || roleKey === 'assassin') {
             this.enabledRoles.merlin = newVal;
-            if (!newVal) this.enabledRoles.percival = false;
-        }
-
-        if (roleKey === 'percival' && newVal) {
-            // Percival needs Morgana, Merlin, and Assassin
-            this.enabledRoles.morgana = true;
-            this.enabledRoles.merlin = true;
-            this.enabledRoles.assassin = true;
-        }
-        if (roleKey === 'morgana' && !newVal) {
-            // If Morgana is off, Percival must be off
-            this.enabledRoles.percival = false;
+            this.enabledRoles.assassin = newVal;
+            if (!newVal) {
+                this.enabledRoles.percival = false;
+                this.enabledRoles.morgana = false;
+            }
+        } else if (roleKey === 'percival') {
+            if (newVal) {
+                this.enabledRoles.morgana = true;
+                this.enabledRoles.merlin = true;
+                this.enabledRoles.assassin = true;
+            } else {
+                this.enabledRoles.morgana = false;
+            }
+        } else if (roleKey === 'morgana') {
+            if (newVal) {
+                this.enabledRoles.percival = true;
+                this.enabledRoles.merlin = true;
+                this.enabledRoles.assassin = true;
+            } else {
+                this.enabledRoles.percival = false;
+            }
         }
     }
 

@@ -8,10 +8,10 @@ const PLAYER_DISTRIBUTION = {
 };
 
 const ROLE_INFO = {
-    merlin: { name: 'Merlin', team: 'good', desc: 'Knows evil players (except Mordred)' },
-    percival: { name: 'Percival', team: 'good', desc: 'Sees Merlin and Morgana', dep: 'Enables Morgana & Merlin' },
-    assassin: { name: 'Assassin', team: 'evil', desc: 'Can kill Merlin if Good wins' },
-    morgana: { name: 'Morgana', team: 'evil', desc: 'Appears as Merlin to Percival', dep: 'Needed for Percival' },
+    merlin: { name: 'Merlin', team: 'good', desc: 'Knows evil players (except Mordred)', dep: 'Requires Assassin' },
+    percival: { name: 'Percival', team: 'good', desc: 'Sees Merlin and Morgana', dep: 'Requires Morgana & Merlin' },
+    assassin: { name: 'Assassin', team: 'evil', desc: 'Can kill Merlin if Good wins', dep: 'Requires Merlin' },
+    morgana: { name: 'Morgana', team: 'evil', desc: 'Appears as Merlin to Percival', dep: 'Requires Percival & Merlin' },
     mordred: { name: 'Mordred', team: 'evil', desc: 'Hidden from Merlin' },
     oberon: { name: 'Oberon', team: 'evil', desc: 'Unknown to other evil players' },
 };
