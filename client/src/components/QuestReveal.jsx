@@ -69,7 +69,7 @@ export default function QuestReveal() {
                             return (
                                 <div
                                     key={index}
-                                    className={`reveal-card ${isRevealed ? 'revealed' : 'hidden'} ${isRevealed ? (action === 'success' ? 'reveal-success' : 'reveal-fail') : ''}`}
+                                    className={`reveal-card ${isRevealed ? 'animate-reveal reveal-' + action : 'hidden'}`}
                                 >
                                     <div className="reveal-card-inner">
                                         <div className="reveal-card-front">?</div>

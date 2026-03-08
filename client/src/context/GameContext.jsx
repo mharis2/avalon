@@ -119,7 +119,7 @@ export function GameProvider({ children }) {
 
             if (!roomCode || !playerId) {
                 try {
-                    const saved = localStorage.getItem('avalonSession');
+                    const saved = sessionStorage.getItem('avalonSession');
                     if (saved) {
                         const parsed = JSON.parse(saved);
                         if (parsed && parsed.roomCode && parsed.playerId) {
@@ -149,7 +149,7 @@ export function GameProvider({ children }) {
                         stateRef.current.playerId = playerId;
                     } else {
                         // Reconnect failed (room deleted or player kicked)
-                        localStorage.removeItem('avalonSession');
+                        sessionStorage.removeItem('avalonSession');
                         dispatch({ type: 'RESET' });
                         dispatch({ type: 'SET_ERROR', payload: 'Room was closed due to inactivity.' });
                     }
@@ -170,7 +170,7 @@ export function GameProvider({ children }) {
             const me = s.players.find(p => p.id === stateRef.current.playerId);
             if (!me) {
                 // The server formally removed us (kicked or timeout)
-                localStorage.removeItem('avalonSession');
+                sessionStorage.removeItem('avalonSession');
                 dispatch({ type: 'RESET' });
                 dispatch({ type: 'SET_ERROR', payload: 'You were removed from the room due to inactivity.' });
             }
@@ -271,7 +271,7 @@ export function GameProvider({ children }) {
                 dispatch({ type: 'SET_PLAYER', payload: { playerId: res.playerId, playerName } });
                 dispatch({ type: 'SET_ROOM', payload: res.roomCode });
                 dispatch({ type: 'UPDATE_STATE', payload: res.state });
-                localStorage.setItem('avalonSession', JSON.stringify({ roomCode: res.roomCode, playerId: res.playerId }));
+                sessionStorage.setItem('avalonSession', JSON.stringify({ roomCode: res.roomCode, playerId: res.playerId }));
             }
             cb?.(res);
         });
@@ -283,7 +283,7 @@ export function GameProvider({ children }) {
                 dispatch({ type: 'SET_PLAYER', payload: { playerId: res.playerId, playerName } });
                 dispatch({ type: 'SET_ROOM', payload: res.roomCode });
                 dispatch({ type: 'UPDATE_STATE', payload: res.state });
-                localStorage.setItem('avalonSession', JSON.stringify({ roomCode: res.roomCode, playerId: res.playerId }));
+                sessionStorage.setItem('avalonSession', JSON.stringify({ roomCode: res.roomCode, playerId: res.playerId }));
             }
             cb?.(res);
         });
@@ -331,7 +331,7 @@ export function GameProvider({ children }) {
 
     const leaveRoom = useCallback((cb) => {
         // Optimistically clean up local state so we don't get stuck if the connection drops
-        localStorage.removeItem('avalonSession');
+        sessionStorage.removeItem('avalonSession');
         stateRef.current.roomCode = null;
         stateRef.current.playerId = null;
         dispatch({ type: 'RESET' });

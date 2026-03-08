@@ -33,22 +33,40 @@
     width: 120px;
     height: 180px;
     position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
-}
-
-.reveal-card.hidden {
-    transform: translateY(100vh) rotateX(180deg);
+    /* Removed the transition from the base class so keyframes can control it */
     opacity: 0;
 }
 
-.reveal-card.revealed {
-    transform: translateY(0) rotateX(0);
-    opacity: 1;
+/* Base class before the animation starts */
+.reveal-card.hidden {
+    opacity: 0;
 }
 
-.reveal-card.revealed:hover {
-    transform: translateY(-10px) scale(1.05);
+/* The actual animation payload applied via JS */
+.reveal-card.animate-reveal {
+    animation: cardFlyInAndFlip 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes cardFlyInAndFlip {
+    0% {
+        transform: translateY(150vh);
+        opacity: 0;
+    }
+
+    40% {
+        transform: translateY(-20px);
+        opacity: 1;
+    }
+
+    60% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .reveal-card-inner {
@@ -56,13 +74,18 @@
     height: 100%;
     position: absolute;
     transform-style: preserve-3d;
+    /* Flip is handled by this transition when the animate-reveal class is present */
+    transform: rotateY(180deg);
     transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition-delay: 0.3s;
+    /* Wait briefly after the card flies up to flip it */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     border-radius: 12px;
 }
 
-.hidden .reveal-card-inner {
-    transform: rotateY(180deg);
+/* When the card receives the animate class, flip it over */
+.reveal-card.animate-reveal .reveal-card-inner {
+    transform: rotateY(0deg);
 }
 
 .reveal-card-front,
@@ -127,6 +150,19 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(20px);
+    animation: resultStamp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes resultStamp {
+    0% {
+        transform: scale(2);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .result-success-theme {
@@ -203,42 +239,54 @@
 /* Mobile Responsiveness */
 @media (max-width: 600px) {
     .reveal-card {
-        width: 80px;
-        height: 120px;
+        width: 60px;
+        /* Reduced width to fit 5 cleanly */
+        height: 90px;
     }
 
     .reveal-cards-container {
-        gap: 0.8rem;
-        padding: 1rem;
+        gap: 0.5rem;
+        padding: 0.5rem;
     }
 
     .reveal-icon {
-        font-size: 2.5rem;
+        font-size: 1.5rem;
+        margin-bottom: 5px;
     }
 
     .reveal-label {
-        font-size: 0.9rem;
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+    }
+
+    .reveal-card-front {
+        font-size: 1.2rem;
     }
 
     .final-result-title {
-        font-size: 2.5rem;
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     .summary-count {
-        font-size: 4rem;
+        font-size: 3rem;
+    }
+
+    .summary-icon {
+        font-size: 1.2rem;
     }
 
     .quest-reveal-result {
-        padding: 2rem;
-        width: 90%;
+        padding: 1.5rem;
+        width: 95%;
     }
 
     .reveal-title {
-        font-size: 1.5rem;
-        margin-bottom: 2rem;
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
     }
 
     .result-summary-cards {
-        gap: 2rem;
+        gap: 1.5rem;
     }
 }
