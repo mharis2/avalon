@@ -61,6 +61,14 @@ class RoomManager {
 
         this.playerRoomMap.delete(socketId);
 
+        // Transfer host if the disconnected player was the host
+        if (room.hostId === mapping.playerId) {
+            const nextHost = room.players.find(p => p.connected);
+            if (nextHost) {
+                room.hostId = nextHost.id;
+            }
+        }
+
         // Check if everyone is disconnected
         const allDisconnected = room.players.every(p => !p.connected);
 
@@ -74,7 +82,54 @@ class RoomManager {
             this.deletionTimers.set(mapping.roomCode, timer);
         }
 
-        return { room, removed: false, roomCode: mapping.roomCode };
+        return { room, removed: false, roomCode: mapping.roomCode, playerId: mapping.playerId };
+    }
+
+    removePlayerFromRoom(roomCode, playerId) {
+        const room = this.rooms.get(roomCode);
+        if (!room) return null;
+
+        room.removePlayer(playerId);
+
+        // Remove from map if they happen to be mapped somehow
+        for (const [sId, mapping] of this.playerRoomMap.entries()) {
+            if (mapping.roomCode === roomCode && mapping.playerId === playerId) {
+                this.playerRoomMap.delete(sId);
+                break;
+            }
+        }
+
+        if (room.players.length === 0) {
+            this.rooms.delete(roomCode);
+            return null;
+        }
+        return room;
+    }
+
+    explicitLeaveRoom(socketId) {
+        const mapping = this.playerRoomMap.get(socketId);
+        if (!mapping) return null;
+
+        const room = this.rooms.get(mapping.roomCode);
+        if (!room) {
+            this.playerRoomMap.delete(socketId);
+            return null;
+        }
+
+        room.removePlayer(mapping.playerId);
+        this.playerRoomMap.delete(socketId);
+
+        // Check if room is empty
+        if (room.players.length === 0) {
+            if (this.deletionTimers.has(mapping.roomCode)) {
+                clearTimeout(this.deletionTimers.get(mapping.roomCode));
+                this.deletionTimers.delete(mapping.roomCode);
+            }
+            this.rooms.delete(mapping.roomCode);
+            return { room: null, removed: true, roomCode: mapping.roomCode };
+        }
+
+        return { room, removed: true, roomCode: mapping.roomCode, playerId: mapping.playerId };
     }
 
     getRoom(code) {

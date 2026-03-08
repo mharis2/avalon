@@ -321,6 +321,16 @@ export function GameProvider({ children }) {
         socket.emit('restart-game', {}, (res) => cb?.(res));
     }, []);
 
+    const leaveRoom = useCallback((cb) => {
+        socket.emit('leave-room', {}, (res) => {
+            if (res.success) {
+                localStorage.removeItem('avalonSession');
+                dispatch({ type: 'RESET' });
+            }
+            cb?.(res);
+        });
+    }, []);
+
     const clearShowingResult = useCallback(() => {
         dispatch({ type: 'CLEAR_SHOWING_RESULT' });
     }, []);
@@ -343,6 +353,7 @@ export function GameProvider({ children }) {
         returnToLobby,
         endGame,
         restartGame,
+        leaveRoom,
         clearShowingResult,
         toggleMiniGame,
         isHost: state.playerId === state.hostId,

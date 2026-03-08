@@ -107,6 +107,12 @@
     border: 1px dashed var(--border-medium);
 }
 
+.lobby-player-offline {
+    opacity: 0.5;
+    background: var(--bg-primary);
+    border: 1px dashed var(--border-medium);
+}
+
 .lobby-player-name {
     font-weight: 500;
     flex: 1;
@@ -243,6 +249,16 @@
     font-size: 0.9rem;
 }
 
+.lobby-leave-container {
+    text-align: center;
+    margin-top: var(--space-xl);
+}
+
+.lobby-leave-btn {
+    width: 60%;
+    margin: 0 auto;
+}
+
 @media (max-width: 480px) {
     .lobby-roles {
         grid-template-columns: 1fr;
@@ -266,7 +282,8 @@
         min-height: 44px;
     }
 
-    .lobby-start-btn {
+    .lobby-start-btn,
+    .lobby-leave-btn {
         min-height: 48px;
         font-size: 1rem;
     }

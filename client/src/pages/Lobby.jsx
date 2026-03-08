@@ -22,7 +22,7 @@ const DEFAULT_ROLES = [
 ];
 
 export default function Lobby() {
-    const { players, enabledRoles, roomCode, isHost, toggleRole, startGame, hostId } = useGame();
+    const { players, enabledRoles, roomCode, isHost, toggleRole, startGame, leaveRoom, hostId } = useGame();
     const playerCount = players.length;
     const dist = PLAYER_DISTRIBUTION[playerCount];
     const canStart = playerCount >= 5 && playerCount <= 10;
@@ -31,6 +31,14 @@ export default function Lobby() {
         startGame((res) => {
             if (res?.error) alert(res.error);
         });
+    };
+
+    const handleLeave = () => {
+        if (confirm("Are you sure you want to leave the lobby?")) {
+            leaveRoom((res) => {
+                if (res?.error) alert(res.error);
+            });
+        }
     };
 
     const handleCopyCode = () => {
@@ -58,9 +66,9 @@ export default function Lobby() {
                     </h3>
                     <div className="lobby-players">
                         {players.map((p, i) => (
-                            <div key={p.id} className="lobby-player" style={{ animationDelay: `${i * 0.05}s` }}>
-                                <div className="lobby-player-avatar">
-                                    {p.name.charAt(0).toUpperCase()}
+                            <div key={p.id} className={`lobby-player ${p.connected === false ? 'lobby-player-offline' : ''}`} style={{ animationDelay: `${i * 0.05}s` }}>
+                                <div className="lobby-player-avatar" title={p.connected === false ? 'Disconnected' : ''}>
+                                    {p.connected === false ? '🔌' : p.name.charAt(0).toUpperCase()}
                                 </div>
                                 <span className="lobby-player-name">{p.name}</span>
                                 {p.id === hostId && <span className="badge badge-gold">Host</span>}
@@ -161,6 +169,12 @@ export default function Lobby() {
                         Waiting for host to start the game...
                     </div>
                 )}
+
+                <div className="lobby-leave-container animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                    <button className="btn btn-outline btn-sm lobby-leave-btn" onClick={handleLeave}>
+                        🚪 Leave Room
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -502,6 +502,33 @@ function setupSocketHandlers(io, roomManager) {
         });
 
         // ═══════════════════════════════════════════════════════════════
+        //  Explicit Leave
+        // ═══════════════════════════════════════════════════════════════
+        socket.on('leave-room', (_, callback) => {
+            try {
+                const result = roomManager.explicitLeaveRoom(socket.id);
+                if (result) {
+                    socket.leave(result.roomCode);
+                    if (result.room) {
+                        io.to(result.roomCode).emit('player-left', {
+                            state: result.room.getPublicState(),
+                        });
+                        // End game if < 5 players mid-game
+                        if (result.room.phase !== PHASES.LOBBY && result.room.players.length < 5) {
+                            result.room.resetForNewGame();
+                            io.to(result.roomCode).emit('returned-to-lobby', {
+                                state: result.room.getPublicState(),
+                            });
+                        }
+                    }
+                }
+                callback?.({ success: true });
+            } catch (err) {
+                callback?.({ error: err.message });
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════════
         //  Disconnect
         // ═══════════════════════════════════════════════════════════════
         socket.on('disconnect', () => {
@@ -511,6 +538,36 @@ function setupSocketHandlers(io, roomManager) {
                 io.to(result.roomCode).emit('player-left', {
                     state: result.room.getPublicState(),
                 });
+
+                // Remove player fully if they don't reconnect
+                const { roomCode, playerId, room } = result;
+                const timeoutMs = room.phase === PHASES.LOBBY ? 120000 : 300000; // 2 min lobby, 5 min game
+
+                const timerId = setTimeout(() => {
+                    const r = roomManager.getRoom(roomCode);
+                    if (r) {
+                        const p = r.getPlayer(playerId);
+                        if (p && !p.connected) {
+                            console.log(`[Timer] Removing disconnected player ${playerId} from room ${roomCode}`);
+                            const updatedRoom = roomManager.removePlayerFromRoom(roomCode, playerId);
+                            if (updatedRoom) {
+                                io.to(roomCode).emit('player-left', {
+                                    state: updatedRoom.getPublicState(),
+                                });
+                                // End game if not enough players
+                                if (updatedRoom.phase !== PHASES.LOBBY && updatedRoom.players.length < 5) {
+                                    updatedRoom.resetForNewGame();
+                                    io.to(roomCode).emit('returned-to-lobby', {
+                                        state: updatedRoom.getPublicState(),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }, timeoutMs);
+
+                if (!roomManager.disconnectTimers) roomManager.disconnectTimers = new Map();
+                roomManager.disconnectTimers.set(playerId, timerId);
             }
         });
 
@@ -519,10 +576,20 @@ function setupSocketHandlers(io, roomManager) {
         // ═══════════════════════════════════════════════════════════════
         socket.on('reconnect-player', ({ roomCode, playerId }, callback) => {
             try {
+                if (roomManager.disconnectTimers && roomManager.disconnectTimers.has(playerId)) {
+                    clearTimeout(roomManager.disconnectTimers.get(playerId));
+                    roomManager.disconnectTimers.delete(playerId);
+                }
+
                 const room = roomManager.reconnectPlayer(socket.id, roomCode.toUpperCase(), playerId);
                 if (!room) return callback?.({ error: 'Room not found' });
 
                 socket.join(room.code);
+
+                socket.to(room.code).emit('player-joined', {
+                    player: { id: playerId, name: room.getPlayer(playerId)?.name },
+                    state: room.getPublicState(),
+                });
 
                 const roleInfo = room.phase !== PHASES.LOBBY && room.phase !== PHASES.COUNTDOWN
                     ? room.getRoleInfoForPlayer(playerId)

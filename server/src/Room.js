@@ -392,6 +392,7 @@ class Room {
                 id: p.id,
                 name: p.name,
                 isHost: p.id === this.hostId,
+                connected: p.connected,
             })),
             hostId: this.hostId,
             enabledRoles: this.enabledRoles,
