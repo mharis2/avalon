@@ -542,7 +542,7 @@ function setupSocketHandlers(io, roomManager) {
 
                 // Remove player fully if they don't reconnect
                 const { roomCode, playerId, room } = result;
-                const timeoutMs = room.phase === PHASES.LOBBY ? 120000 : 300000; // 2 min lobby, 5 min game
+                const timeoutMs = room.phase === PHASES.LOBBY ? 300000 : 600000; // 5 min lobby, 10 min game
 
                 const timerId = setTimeout(() => {
                     const r = roomManager.getRoom(roomCode);

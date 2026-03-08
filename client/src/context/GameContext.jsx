@@ -95,7 +95,11 @@ function reducer(state, action) {
         case 'SET_MINIGAME_ENABLED':
             return { ...state, miniGameEnabled: action.payload };
         case 'RESET':
-            return { ...initialState, connected: state.connected };
+            return {
+                ...initialState,
+                connected: state.connected,
+                miniGameEnabled: state.miniGameEnabled
+            };
         default:
             return state;
     }
@@ -161,6 +165,15 @@ export function GameProvider({ children }) {
 
         socket.on('player-left', ({ state: s }) => {
             dispatch({ type: 'UPDATE_STATE', payload: s });
+
+            // Check if WE were the player removed from the state entirely
+            const me = s.players.find(p => p.id === stateRef.current.playerId);
+            if (!me) {
+                // The server formally removed us (kicked or timeout)
+                localStorage.removeItem('avalonSession');
+                dispatch({ type: 'RESET' });
+                dispatch({ type: 'SET_ERROR', payload: 'You were removed from the room due to inactivity.' });
+            }
         });
 
         socket.on('roles-updated', ({ state: s }) => {
