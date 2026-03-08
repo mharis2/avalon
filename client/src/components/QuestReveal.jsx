@@ -10,46 +10,23 @@ export default function QuestReveal() {
     useEffect(() => {
         if (!questReveal || !questReveal.actions) return;
 
-        const { actions, elapsed = 0 } = questReveal;
-        const totalCards = actions.length;
+        const totalCards = questReveal.actions.length;
 
-        const INITIAL_PAUSE = 1000;
-        const CARD_DELAY = 1500;
-        const RESULT_PAUSE = 1000;
+        if (showResult) return;
 
-        let initial = 0;
-        if (elapsed > INITIAL_PAUSE) {
-            initial = Math.floor((elapsed - INITIAL_PAUSE) / CARD_DELAY) + 1;
-        }
-        if (initial > totalCards) initial = totalCards;
-
-        setRevealedCount(initial);
-
-        const resultTime = INITIAL_PAUSE + (totalCards * CARD_DELAY) + RESULT_PAUSE;
-        setShowResult(elapsed >= resultTime);
-
-        const timers = [];
-
-        for (let i = initial; i < totalCards; i++) {
-            const targetTime = INITIAL_PAUSE + (i * CARD_DELAY);
-            const delay = Math.max(0, targetTime - elapsed);
-
-            const t = setTimeout(() => {
-                setRevealedCount(prev => Math.max(prev, i + 1));
+        if (revealedCount < totalCards) {
+            const delay = revealedCount === 0 ? 1000 : 1500;
+            const timer = setTimeout(() => {
+                setRevealedCount(prev => prev + 1);
             }, delay);
-            timers.push(t);
-        }
-
-        const resultDelay = Math.max(0, resultTime - elapsed);
-        if (elapsed < resultTime) {
-            const t = setTimeout(() => {
+            return () => clearTimeout(timer);
+        } else {
+            const timer = setTimeout(() => {
                 setShowResult(true);
-            }, resultDelay);
-            timers.push(t);
+            }, 1000);
+            return () => clearTimeout(timer);
         }
-
-        return () => timers.forEach(clearTimeout);
-    }, [questReveal]);
+    }, [questReveal, revealedCount, showResult]);
 
     if (!questReveal || !questReveal.actions) return null;
 
@@ -65,11 +42,12 @@ export default function QuestReveal() {
                     <h2 className="heading-display reveal-title animate-pulse">Revealing Quest Cards...</h2>
                     <div className="reveal-cards-container">
                         {actions.map((action, index) => {
-                            const isRevealed = index < revealedCount;
+                            if (index >= revealedCount) return null;
+
                             return (
                                 <div
-                                    key={index}
-                                    className={`reveal-card ${isRevealed ? 'animate-reveal reveal-' + action : 'hidden'}`}
+                                    key={`card-${index}`}
+                                    className={`reveal-card animate-reveal reveal-${action}`}
                                 >
                                     <div className="reveal-card-inner">
                                         <div className="reveal-card-front">?</div>
