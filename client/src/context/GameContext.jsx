@@ -330,11 +330,13 @@ export function GameProvider({ children }) {
     }, []);
 
     const leaveRoom = useCallback((cb) => {
+        // Optimistically clean up local state so we don't get stuck if the connection drops
+        localStorage.removeItem('avalonSession');
+        stateRef.current.roomCode = null;
+        stateRef.current.playerId = null;
+        dispatch({ type: 'RESET' });
+
         socket.emit('leave-room', {}, (res) => {
-            if (res.success) {
-                localStorage.removeItem('avalonSession');
-                dispatch({ type: 'RESET' });
-            }
             cb?.(res);
         });
     }, []);

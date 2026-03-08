@@ -39,7 +39,7 @@ export default function GameBoard() {
         rejectionTrack, maxRejections, questResults, proposedTeam,
         questTeamSizes, roleInfo, isLeader, isHost, proposeTeam, endGame,
         showingResult, voteResult, questReveal,
-        winner, fullReveal, voteHistory,
+        winner, fullReveal, voteHistory, leaveRoom,
     } = useGame();
 
     const [selectedTeam, setSelectedTeam] = useState([]);
@@ -168,6 +168,13 @@ export default function GameBoard() {
                 </button>
                 <div className="gb-topbar-actions">
                     <button className="btn btn-ghost btn-sm" onClick={() => setShowVoteHistory(true)}>📊</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => {
+                        if (confirm("Are you sure you want to leave the room? You will not be able to interact unless you rejoin.")) {
+                            leaveRoom((res) => {
+                                if (res?.error) alert(res.error);
+                            });
+                        }
+                    }}>🚪 Leave</button>
                     {isHost && (
                         <button className="btn btn-ghost btn-sm gb-end-btn" onClick={() => setShowEndConfirm(true)}>✕ End</button>
                     )}
