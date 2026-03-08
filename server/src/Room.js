@@ -430,7 +430,10 @@ class Room {
             questResults: this.questResults,
             proposedTeam: this.proposedTeam,
             voteHistory: this.voteHistory,
-            questReveal: this.questReveal,
+            questReveal: this.questReveal ? {
+                ...this.questReveal,
+                elapsed: Date.now() - this.questReveal.startTime
+            } : null,
             winner: this.winner,
             winReason: this.winReason,
             questTeamSizes: QUEST_TEAM_SIZES[this.players.length] || [],

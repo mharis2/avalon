@@ -10,15 +10,12 @@ export default function QuestReveal() {
     useEffect(() => {
         if (!questReveal) return;
 
-        const { actions, startTime } = questReveal;
+        const { actions, elapsed } = questReveal;
         const totalCards = actions.length;
 
         // Time per card reveal
         const CARD_DELAY = 1500;
         const RESULT_DELAY = (totalCards * CARD_DELAY) + 500;
-
-        // Calculate how much time has passed since server started the reveal
-        const elapsed = Date.now() - startTime;
 
         let initialCards = Math.floor(elapsed / CARD_DELAY);
         if (initialCards < 0) initialCards = 0;
