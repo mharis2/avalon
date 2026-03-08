@@ -11,22 +11,45 @@ export default function QuestReveal() {
         if (!questReveal || !questReveal.actions) return;
 
         const totalCards = questReveal.actions.length;
+        if (totalCards === 0) return;
 
-        if (showResult) return;
+        // Use the absolute start time of the phase, offset by any server elapsed time
+        const startTime = Date.now() - (questReveal.elapsed || 0);
+        let animationFrameId;
 
-        if (revealedCount < totalCards) {
-            const delay = revealedCount === 0 ? 1000 : 1500;
-            const timer = setTimeout(() => {
-                setRevealedCount(prev => prev + 1);
-            }, delay);
-            return () => clearTimeout(timer);
-        } else {
-            const timer = setTimeout(() => {
+        const checkTime = () => {
+            const elapsed = Date.now() - startTime;
+
+            // Calculate how many cards should be revealed based on elapsed time.
+            // First card flies in at 1000ms. Subsequent cards every 1500ms.
+            let expectedCount = 0;
+            if (elapsed >= 1000) {
+                expectedCount = 1 + Math.floor((elapsed - 1000) / 1500);
+            }
+
+            // Clamp to totalCards
+            if (expectedCount > totalCards) expectedCount = totalCards;
+
+            setRevealedCount(expectedCount);
+
+            // Show result exactly 1000ms after the last card flies in.
+            // Time of last card = 1000 + (totalCards - 1) * 1500.
+            // +1000ms for result = 2000 + (totalCards - 1) * 1500.
+            const timeToResult = 2000 + (totalCards - 1) * 1500;
+
+            if (elapsed >= timeToResult) {
                 setShowResult(true);
-            }, 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [questReveal, revealedCount, showResult]);
+            } else {
+                animationFrameId = requestAnimationFrame(checkTime);
+            }
+        };
+
+        animationFrameId = requestAnimationFrame(checkTime);
+
+        return () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        };
+    }, [questReveal]);
 
     if (!questReveal || !questReveal.actions) return null;
 
