@@ -8,37 +8,40 @@ export default function QuestReveal() {
     const [showResult, setShowResult] = useState(false);
 
     useEffect(() => {
-        if (!questReveal) return;
+        if (!questReveal || !questReveal.actions) return;
 
-        const { actions, elapsed } = questReveal;
+        const { actions, elapsed = 0 } = questReveal;
         const totalCards = actions.length;
 
-        // Time per card reveal
+        const INITIAL_PAUSE = 1000;
         const CARD_DELAY = 1500;
-        const RESULT_DELAY = (totalCards * CARD_DELAY) + 500;
+        const RESULT_PAUSE = 1000;
 
-        let initialCards = Math.floor(elapsed / CARD_DELAY);
-        if (initialCards < 0) initialCards = 0;
+        let initial = 0;
+        if (elapsed > INITIAL_PAUSE) {
+            initial = Math.floor((elapsed - INITIAL_PAUSE) / CARD_DELAY) + 1;
+        }
+        if (initial > totalCards) initial = totalCards;
 
-        setRevealedCount(Math.min(initialCards, totalCards));
-        setShowResult(elapsed >= RESULT_DELAY);
+        setRevealedCount(initial);
+
+        const resultTime = INITIAL_PAUSE + (totalCards * CARD_DELAY) + RESULT_PAUSE;
+        setShowResult(elapsed >= resultTime);
 
         const timers = [];
 
-        // Schedule remaining cards
-        for (let i = initialCards; i < totalCards; i++) {
-            const delay = (i * CARD_DELAY) - elapsed;
-            if (delay > 0) {
-                const t = setTimeout(() => {
-                    setRevealedCount(i + 1);
-                }, delay);
-                timers.push(t);
-            }
+        for (let i = initial; i < totalCards; i++) {
+            const targetTime = INITIAL_PAUSE + (i * CARD_DELAY);
+            const delay = Math.max(0, targetTime - elapsed);
+
+            const t = setTimeout(() => {
+                setRevealedCount(prev => Math.max(prev, i + 1));
+            }, delay);
+            timers.push(t);
         }
 
-        // Schedule final result
-        const resultDelay = RESULT_DELAY - elapsed;
-        if (resultDelay > 0) {
+        const resultDelay = Math.max(0, resultTime - elapsed);
+        if (elapsed < resultTime) {
             const t = setTimeout(() => {
                 setShowResult(true);
             }, resultDelay);
@@ -48,10 +51,10 @@ export default function QuestReveal() {
         return () => timers.forEach(clearTimeout);
     }, [questReveal]);
 
-    if (!questReveal) return null;
+    if (!questReveal || !questReveal.actions) return null;
 
     const { actions, result } = questReveal;
-    const { passed, requiresTwoFails, failCount, successCount } = result;
+    const { passed, requiresTwoFails, failCount, successCount } = result || {};
 
     return (
         <div className="quest-reveal-container">
