@@ -4,8 +4,12 @@ import './QuestReveal.css';
 
 export default function QuestReveal() {
     const { questReveal } = useGame();
-    const [revealedCount, setRevealedCount] = useState(0);
+    // cardState matches actions.length. Each index can be:
+    // 'hidden' -> 'focus' (flying up + flipping) -> 'settled' (moved to final row)
+    const [cardStates, setCardStates] = useState([]);
     const [showResult, setShowResult] = useState(false);
+    // Tracks the current active background flash (e.g. 'success' or 'fail')
+    const [bgFlash, setBgFlash] = useState(null);
 
     useEffect(() => {
         if (!questReveal || !questReveal.actions) return;
@@ -13,42 +17,51 @@ export default function QuestReveal() {
         const totalCards = questReveal.actions.length;
         if (totalCards === 0) return;
 
-        // Use the absolute start time of the phase, offset by any server elapsed time
-        const startTime = Date.now() - (questReveal.elapsed || 0);
-        let animationFrameId;
+        setCardStates(Array(totalCards).fill('hidden'));
 
-        const checkTime = () => {
-            const elapsed = Date.now() - startTime;
+        let timeouts = [];
 
-            // Calculate how many cards should be revealed based on elapsed time.
-            // First card flies in at 1000ms. Subsequent cards every 1500ms.
-            let expectedCount = 0;
-            if (elapsed >= 1000) {
-                expectedCount = 1 + Math.floor((elapsed - 1000) / 1500);
-            }
+        // Timing Constants
+        const NEXT_CARD_DELAY = 1500; // time between starting each card
+        const FLIP_FLASH_OFFSET = 600; // When to trigger the screen flash after the card starts
+        const SETTLE_OFFSET = 1200; // When to settle the card into the grid
+        const RESULT_DELAY = (totalCards * NEXT_CARD_DELAY) + 1000;
 
-            // Clamp to totalCards
-            if (expectedCount > totalCards) expectedCount = totalCards;
+        questReveal.actions.forEach((action, i) => {
+            const startTime = i * NEXT_CARD_DELAY;
 
-            setRevealedCount(expectedCount);
+            // 1. Trigger the card to fly up and flip centrally
+            timeouts.push(setTimeout(() => {
+                setCardStates(prev => {
+                    const next = [...prev];
+                    next[i] = 'focus';
+                    return next;
+                });
+            }, startTime));
 
-            // Show result exactly 1000ms after the last card flies in.
-            // Time of last card = 1000 + (totalCards - 1) * 1500.
-            // +1000ms for result = 2000 + (totalCards - 1) * 1500.
-            const timeToResult = 2000 + (totalCards - 1) * 1500;
+            // 2. Trigger the explosive screen color flash as the card flips
+            timeouts.push(setTimeout(() => {
+                setBgFlash(action);
+                // Clear flash after 400ms
+                timeouts.push(setTimeout(() => setBgFlash(null), 400));
+            }, startTime + FLIP_FLASH_OFFSET));
 
-            if (elapsed >= timeToResult) {
-                setShowResult(true);
-            } else {
-                animationFrameId = requestAnimationFrame(checkTime);
-            }
-        };
+            // 3. Shrink the card down into the results tray
+            timeouts.push(setTimeout(() => {
+                setCardStates(prev => {
+                    const next = [...prev];
+                    next[i] = 'settled';
+                    return next;
+                });
+            }, startTime + SETTLE_OFFSET));
+        });
 
-        animationFrameId = requestAnimationFrame(checkTime);
+        // 4. Finally show the big overlay result
+        timeouts.push(setTimeout(() => {
+            setShowResult(true);
+        }, RESULT_DELAY));
 
-        return () => {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        };
+        return () => timeouts.forEach(clearTimeout);
     }, [questReveal]);
 
     if (!questReveal || !questReveal.actions) return null;
@@ -57,32 +70,44 @@ export default function QuestReveal() {
     const { passed, requiresTwoFails, failCount, successCount } = result || {};
 
     return (
-        <div className="quest-reveal-container">
-            <div className="app-background" />
+        <div className={`quest-reveal-container ${bgFlash ? `flash-${bgFlash}` : ''}`}>
+            {/* Cinematic Background overlay */}
+            <div className="reveal-ambient-bg" />
 
             {!showResult ? (
                 <div className="quest-reveal-arena">
-                    <h2 className="heading-display reveal-title animate-pulse">Revealing Quest Cards...</h2>
-                    <div className="reveal-cards-container">
-                        {actions.map((action, index) => {
-                            if (index >= revealedCount) return null;
+                    {/* The settled cards row */}
+                    <div className="reveal-cards-tray">
+                        {actions.map((action, index) => (
+                            <div
+                                key={`tray-${index}`}
+                                className={`reveal-tray-slot ${cardStates[index] === 'settled' ? 'filled' : ''}`}
+                            >
+                                {cardStates[index] === 'settled' && (
+                                    <div className={`tray-card tray-card-${action} animate-pop-in`}>
+                                        <span className="tray-card-icon">{action === 'success' ? '✓' : '✗'}</span>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
 
-                            return (
-                                <div
-                                    key={`card-${index}`}
-                                    className={`reveal-card animate-reveal reveal-${action}`}
-                                >
-                                    <div className="reveal-card-inner">
-                                        <div className="reveal-card-front">?</div>
-                                        <div className="reveal-card-back">
-                                            <span className="reveal-icon">{action === 'success' ? '✓' : '✗'}</span>
-                                            <span className="reveal-label">{action === 'success' ? 'Success' : 'Fail'}</span>
-                                        </div>
+                    {/* The active focus card that flies from bottom center */}
+                    {actions.map((action, index) => {
+                        if (cardStates[index] !== 'focus') return null;
+
+                        return (
+                            <div key={`focus-${index}`} className={`reveal-focus-card reveal-${action}`}>
+                                <div className="reveal-focus-inner">
+                                    <div className="reveal-focus-front">?</div>
+                                    <div className="reveal-focus-back">
+                                        <span className="focus-icon">{action === 'success' ? '✓' : '✗'}</span>
+                                        <span className="focus-label">{action === 'success' ? 'SUCCESS' : 'FAIL'}</span>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        );
+                    })}
                 </div>
             ) : (
                 <div className={`quest-reveal-result animate-fade-in-scale ${passed ? 'result-success-theme' : 'result-fail-theme'}`}>

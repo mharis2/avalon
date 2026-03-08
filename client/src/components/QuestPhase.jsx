@@ -5,6 +5,7 @@ import './QuestPhase.css';
 export default function QuestPhase() {
     const { submitQuestAction, roleInfo, isOnQuestTeam, questSubmittedCount, proposedTeam, players, currentQuestIndex } = useGame();
     const [submitted, setSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isGood = roleInfo?.team === 'good';
     const teamNames = proposedTeam.map(id => {
@@ -13,11 +14,14 @@ export default function QuestPhase() {
     });
 
     const handleAction = (action) => {
-        setSubmitted(true);
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         submitQuestAction(action, (res) => {
+            setIsSubmitting(false);
             if (res?.error) {
-                setSubmitted(false);
                 alert(res.error);
+            } else {
+                setSubmitted(true);
             }
         });
     };
@@ -58,15 +62,23 @@ export default function QuestPhase() {
             <p className="gb-action-subtitle">Play your card secretly. {isGood ? 'As a loyal servant, you must play Success.' : 'Choose wisely...'}</p>
 
             <div className="quest-cards">
-                <button className="quest-card quest-card-success" onClick={() => handleAction('success')}>
+                <button
+                    className="quest-card quest-card-success"
+                    onClick={() => handleAction('success')}
+                    disabled={isSubmitting}
+                >
                     <span className="quest-card-icon">✓</span>
-                    <span className="quest-card-label">Success</span>
+                    <span className="quest-card-label">{isSubmitting ? '...' : 'Success'}</span>
                 </button>
 
                 {!isGood && (
-                    <button className="quest-card quest-card-fail" onClick={() => handleAction('fail')}>
+                    <button
+                        className="quest-card quest-card-fail"
+                        onClick={() => handleAction('fail')}
+                        disabled={isSubmitting}
+                    >
                         <span className="quest-card-icon">✗</span>
-                        <span className="quest-card-label">Fail</span>
+                        <span className="quest-card-label">{isSubmitting ? '...' : 'Fail'}</span>
                     </button>
                 )}
             </div>

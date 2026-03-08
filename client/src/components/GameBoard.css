@@ -463,9 +463,54 @@
     font-weight: 600;
 }
 
-.result-rejection-info {
+.result.gb-rejection-warning {
     color: var(--evil-primary);
     font-size: 0.85rem;
+    font-weight: bold;
+    margin-top: 5px;
+    animation: pulse 2s infinite;
+}
+
+/* --- Clarity Banner --- */
+.gb-clarity-banner {
+    width: 100%;
+    margin-bottom: 25px;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(15, 15, 25, 0.6);
+    border-left: 4px solid var(--gold);
+}
+
+.gb-clarity-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 1rem;
+}
+
+.gb-clarity-label {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.gb-clarity-value {
+    color: #fff;
+    font-weight: 500;
+}
+
+.gb-clarity-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.gb-clarity-quest-needs {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .result-danger {

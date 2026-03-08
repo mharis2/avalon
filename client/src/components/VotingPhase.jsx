@@ -5,6 +5,7 @@ import './VotingPhase.css';
 export default function VotingPhase() {
     const { submitVote, proposedTeam, players, playerId, votedCount, currentLeader } = useGame();
     const [voted, setVoted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isLeader = currentLeader?.id === playerId;
 
@@ -16,11 +17,14 @@ export default function VotingPhase() {
     const isOnTeam = proposedTeam.includes(playerId);
 
     const handleVote = (vote) => {
-        setVoted(true);
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         submitVote(vote, (res) => {
+            setIsSubmitting(false);
             if (res?.error) {
-                setVoted(false);
                 alert(res.error);
+            } else {
+                setVoted(true);
             }
         });
     };
@@ -58,11 +62,19 @@ export default function VotingPhase() {
 
             {!voted ? (
                 <div className="voting-buttons">
-                    <button className="btn btn-primary voting-btn" onClick={() => handleVote('approve')}>
-                        👍 Approve
+                    <button
+                        className="btn btn-primary voting-btn"
+                        onClick={() => handleVote('approve')}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Submitting...' : '👍 Approve'}
                     </button>
-                    <button className="btn btn-danger voting-btn" onClick={() => handleVote('reject')}>
-                        👎 Reject
+                    <button
+                        className="btn btn-danger voting-btn"
+                        onClick={() => handleVote('reject')}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Submitting...' : '👎 Reject'}
                     </button>
                 </div>
             ) : (
