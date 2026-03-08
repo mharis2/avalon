@@ -1,0 +1,244 @@
+.quest-reveal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.reveal-title {
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.reveal-cards-container {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 2rem;
+    perspective: 1000px;
+}
+
+.reveal-card {
+    width: 120px;
+    height: 180px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+}
+
+.reveal-card.hidden {
+    transform: translateY(100vh) rotateX(180deg);
+    opacity: 0;
+}
+
+.reveal-card.revealed {
+    transform: translateY(0) rotateX(0);
+    opacity: 1;
+}
+
+.reveal-card.revealed:hover {
+    transform: translateY(-10px) scale(1.05);
+}
+
+.reveal-card-inner {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+}
+
+.hidden .reveal-card-inner {
+    transform: rotateY(180deg);
+}
+
+.reveal-card-front,
+.reveal-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.reveal-card-front {
+    background: linear-gradient(135deg, #1f1f2e 0%, #0d0d16 100%);
+    border: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    transform: rotateY(180deg);
+}
+
+.reveal-card-back {
+    border: 2px solid transparent;
+}
+
+.reveal-success .reveal-card-back {
+    background: linear-gradient(135deg, rgba(80, 200, 120, 0.2) 0%, rgba(80, 200, 120, 0.05) 100%);
+    border-color: var(--good-primary);
+    color: var(--good-primary);
+    box-shadow: 0 0 20px rgba(80, 200, 120, 0.3);
+}
+
+.reveal-fail .reveal-card-back {
+    background: linear-gradient(135deg, rgba(220, 20, 60, 0.2) 0%, rgba(220, 20, 60, 0.05) 100%);
+    border-color: var(--evil-primary);
+    color: var(--evil-primary);
+    box-shadow: 0 0 20px rgba(220, 20, 60, 0.3);
+}
+
+.reveal-icon {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px currentColor;
+}
+
+.reveal-label {
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* RESULT THEME */
+.quest-reveal-result {
+    text-align: center;
+    z-index: 10;
+    padding: 4rem;
+    border-radius: 24px;
+    background: rgba(15, 15, 20, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px);
+}
+
+.result-success-theme {
+    border-color: rgba(80, 200, 120, 0.4);
+    box-shadow: 0 0 100px rgba(80, 200, 120, 0.25);
+}
+
+.result-fail-theme {
+    border-color: rgba(220, 20, 60, 0.4);
+    box-shadow: 0 0 100px rgba(220, 20, 60, 0.25);
+}
+
+.final-result-title {
+    font-size: 4.5rem;
+    margin-bottom: 2.5rem;
+    text-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
+}
+
+.result-success-theme .final-result-title {
+    color: var(--good-primary);
+}
+
+.result-fail-theme .final-result-title {
+    color: var(--evil-primary);
+}
+
+.result-summary-cards {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    margin-top: 2rem;
+}
+
+.summary-card-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.summary-count {
+    font-size: 6rem;
+    font-weight: 800;
+    line-height: 1;
+    color: white;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+.summary-icon {
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px currentColor;
+}
+
+.success-text {
+    color: var(--good-primary);
+}
+
+.fail-text {
+    color: var(--evil-primary);
+}
+
+.requires-two-fails-note {
+    margin-top: 2.5rem;
+    color: var(--gold);
+    font-size: 1.3rem;
+    opacity: 0.9;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+    .reveal-card {
+        width: 80px;
+        height: 120px;
+    }
+
+    .reveal-cards-container {
+        gap: 0.8rem;
+        padding: 1rem;
+    }
+
+    .reveal-icon {
+        font-size: 2.5rem;
+    }
+
+    .reveal-label {
+        font-size: 0.9rem;
+    }
+
+    .final-result-title {
+        font-size: 2.5rem;
+    }
+
+    .summary-count {
+        font-size: 4rem;
+    }
+
+    .quest-reveal-result {
+        padding: 2rem;
+        width: 90%;
+    }
+
+    .reveal-title {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .result-summary-cards {
+        gap: 2rem;
+    }
+}

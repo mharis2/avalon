@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import VotingPhase from './VotingPhase';
 import QuestPhase from './QuestPhase';
+import QuestReveal from './QuestReveal';
 import Assassination from './Assassination';
 import GameOver from './GameOver';
 import VoteHistory from './VoteHistory';
@@ -25,6 +26,7 @@ const PHASE_RULES = {
         title: '⚔ Quest',
         rule: 'Team members secretly play Success or Fail. Good MUST play Success. Evil can choose either. Just 1 Fail card fails the quest (2 needed on Quest 4 with 7+ players).',
     },
+    QUEST_REVEAL: null, // No rule text needed during animation
     ASSASSINATION: {
         title: '🗡️ Assassination',
         rule: 'Good passed 3 quests! But the Assassin gets one shot to identify Merlin. If correct, Evil steals the win!',
@@ -36,7 +38,7 @@ export default function GameBoard() {
         phase, players, playerId, currentLeader, currentQuestIndex,
         rejectionTrack, maxRejections, questResults, proposedTeam,
         questTeamSizes, roleInfo, isLeader, isHost, proposeTeam, endGame,
-        showingResult, voteResult, questResult,
+        showingResult, voteResult, questReveal,
         winner, fullReveal, voteHistory,
     } = useGame();
 
@@ -138,44 +140,8 @@ export default function GameBoard() {
         );
     }
 
-    if (showingResult === 'quest' && questResult) {
-        const currentGood = questResults.filter(q => q && q.passed).length;
-        const currentEvil = questResults.filter(q => q && !q.passed).length;
-        return (
-            <div className="page-center">
-                <div className="app-background" />
-                <div className="glass-card result-card animate-fade-in-scale">
-                    <h2 className={`heading-display result-title ${questResult.passed ? 'result-pass' : 'result-fail'}`}>
-                        {questResult.passed ? '🏰 Quest Succeeded!' : '🔥 Quest Failed!'}
-                    </h2>
-                    <div className="result-quest-details">
-                        <div className="result-card-stack">
-                            <div className="result-card-item result-card-success">
-                                ✓ {questResult.successCount}
-                            </div>
-                            <div className="result-card-item result-card-fail">
-                                ✗ {questResult.failCount}
-                            </div>
-                        </div>
-                        {questResult.requiresTwoFails && (
-                            <p className="result-note">⚠ This quest required 2 fails</p>
-                        )}
-                    </div>
-                    <div className="result-progress">
-                        <div className="result-progress-item result-progress-good">
-                            🏰 Good: {currentGood}/3 {currentGood >= 3 ? '→ Assassination!' : `(${3 - currentGood} more)`}
-                        </div>
-                        <div className="result-progress-item result-progress-evil">
-                            🔥 Evil: {currentEvil}/3 {currentEvil >= 3 ? '→ Evil wins!' : `(${3 - currentEvil} more)`}
-                        </div>
-                    </div>
-                    <div className="result-timer-bar">
-                        <div className="result-timer-fill" style={{ animationDuration: '5s' }} />
-                    </div>
-                    <span className="result-timer-text">Auto-continuing in {resultTimer}s</span>
-                </div>
-            </div>
-        );
+    if (phase === 'QUEST_REVEAL' && questReveal) {
+        return <QuestReveal />;
     }
 
     if (phase === 'ASSASSINATION') {

@@ -12,6 +12,7 @@ const {
     checkWinCondition,
     validateTeamProposal,
     processVotes,
+    shuffle,
 } = require('./gameLogic');
 
 class Room {
@@ -41,6 +42,7 @@ class Room {
         this.votes = {};               // { playerId: 'approve'|'reject' }
         this.questActions = {};        // { playerId: 'success'|'fail' }
         this.voteHistory = [];         // Array of { leader, team, votes, approved }
+        this.questReveal = null;
         this.winner = null;
         this.winReason = null;
         this.assassinationTarget = null;
@@ -279,44 +281,65 @@ class Room {
 
     // ─── Resolve Quest ─────────────────────────────────────────────
     resolveQuest() {
-        const actions = Object.values(this.questActions);
+        const actions = shuffle(Object.values(this.questActions));
         const result = evaluateQuest(actions, this.currentQuestIndex, this.players.length);
 
         this.questResults.push(result);
         this.currentQuestIndex++;
+
+        let nextPhase = null;
+        let winState = null;
 
         // Check win condition
         const winCheck = checkWinCondition(this.questResults, this.rejectionTrack);
         if (winCheck) {
             if (winCheck.goToAssassination && this.enabledRoles.merlin) {
                 // Good passed 3 quests, but Assassin gets to try
-                this.phase = PHASES.ASSASSINATION;
-                return { ...result, goToAssassination: true, gameOver: false };
-            }
-
-            if (winCheck.goToAssassination && !this.enabledRoles.merlin) {
+                nextPhase = PHASES.ASSASSINATION;
+                winState = { ...result, goToAssassination: true, gameOver: false };
+            } else if (winCheck.goToAssassination && !this.enabledRoles.merlin) {
                 // No Merlin → Good wins outright
-                this.winner = TEAM_GOOD;
-                this.winReason = 'three_quests_passed';
-                this.phase = PHASES.GAME_OVER;
-                return { ...result, goToAssassination: false, gameOver: true, winner: this.winner, winReason: this.winReason };
+                nextPhase = PHASES.GAME_OVER;
+                winState = { ...result, goToAssassination: false, gameOver: true, winner: TEAM_GOOD, winReason: 'three_quests_passed' };
+            } else {
+                nextPhase = PHASES.GAME_OVER;
+                winState = { ...result, goToAssassination: false, gameOver: true, winner: winCheck.winner, winReason: winCheck.reason };
             }
-
-            this.winner = winCheck.winner;
-            this.winReason = winCheck.reason;
-            this.phase = PHASES.GAME_OVER;
-            return { ...result, goToAssassination: false, gameOver: true, winner: this.winner, winReason: this.winReason };
+        } else {
+            // Next quest: advance leader, back to proposal
+            nextPhase = PHASES.TEAM_PROPOSAL;
+            winState = { ...result, goToAssassination: false, gameOver: false };
         }
 
-        // Next quest: advance leader, back to proposal
-        this.advanceLeader();
-        this.rejectionTrack = 0;
-        this.phase = PHASES.TEAM_PROPOSAL;
-        this.proposedTeam = [];
-        this.votes = {};
-        this.questActions = {};
+        this.phase = PHASES.QUEST_REVEAL;
+        this.questReveal = {
+            startTime: Date.now(),
+            actions,
+            result: winState,
+            nextPhase,
+        };
 
-        return { ...result, goToAssassination: false, gameOver: false };
+        return this.questReveal;
+    }
+
+    finishQuestReveal() {
+        if (!this.questReveal) return;
+
+        const { result, nextPhase } = this.questReveal;
+
+        this.phase = nextPhase;
+        if (nextPhase === PHASES.GAME_OVER) {
+            this.winner = result.winner;
+            this.winReason = result.winReason;
+        } else if (nextPhase === PHASES.TEAM_PROPOSAL) {
+            this.advanceLeader();
+            this.rejectionTrack = 0;
+            this.proposedTeam = [];
+            this.votes = {};
+            this.questActions = {};
+        }
+
+        this.questReveal = null;
     }
 
     // ─── Assassination ─────────────────────────────────────────────
@@ -376,6 +399,7 @@ class Room {
         this.votes = {};
         this.questActions = {};
         this.voteHistory = [];
+        this.questReveal = null;
         this.winner = null;
         this.winReason = null;
         this.assassinationTarget = null;
@@ -406,6 +430,7 @@ class Room {
             questResults: this.questResults,
             proposedTeam: this.proposedTeam,
             voteHistory: this.voteHistory,
+            questReveal: this.questReveal,
             winner: this.winner,
             winReason: this.winReason,
             questTeamSizes: QUEST_TEAM_SIZES[this.players.length] || [],

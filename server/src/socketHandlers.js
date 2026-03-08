@@ -45,38 +45,39 @@ function resolveVotesAndBroadcast(io, room) {
 }
 
 function resolveQuestAndBroadcast(io, room) {
-    const result = room.resolveQuest();
+    const questReveal = room.resolveQuest();
 
-    io.to(room.code).emit('quest-result', {
-        passed: result.passed,
-        failCount: result.failCount,
-        successCount: result.successCount,
-        requiresTwoFails: result.requiresTwoFails,
-        goToAssassination: result.goToAssassination,
-        gameOver: result.gameOver,
-        winner: result.winner,
-        winReason: result.winReason,
+    // Emitting phase-change triggers the client's QUEST_REVEAL component
+    io.to(room.code).emit('phase-change', {
+        phase: room.phase,
         state: room.getPublicState(),
     });
 
-    if (result.gameOver && !result.goToAssassination) {
-        setTimeout(() => {
+    // Animation: 1.5s per card + 4s for final reveal banner
+    const teamSize = questReveal.actions.length;
+    const animationDuration = (teamSize * 1500) + 4000;
+
+    setTimeout(() => {
+        // Now officially finish the quest reveal phase on the server
+        room.finishQuestReveal();
+
+        const { result, nextPhase } = questReveal;
+
+        if (nextPhase === PHASES.GAME_OVER) {
             io.to(room.code).emit('game-over', {
-                winner: room.winner,
-                winReason: room.winReason,
+                winner: result.winner,
+                winReason: result.winReason,
                 reveal: room.getFullReveal(),
                 state: room.getPublicState(),
             });
-        }, QUEST_RESULT_DELAY);
-    } else {
-        // Auto-advance: to assassination or next team proposal
-        setTimeout(() => {
+        } else {
+            // Auto-advance to assassination or next proposal
             io.to(room.code).emit('phase-change', {
                 phase: room.phase,
                 state: room.getPublicState(),
             });
-        }, QUEST_RESULT_DELAY);
-    }
+        }
+    }, animationDuration);
 }
 
 function setupSocketHandlers(io, roomManager) {

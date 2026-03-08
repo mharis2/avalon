@@ -25,6 +25,7 @@ const initialState = {
     winReason: null,
     roleInfo: null,
     countdownStartTime: null,
+    questReveal: null,
     // UI state
     votes: null,
     voteResult: null,
@@ -63,6 +64,7 @@ function reducer(state, action) {
                 questTeamSizes: action.payload.questTeamSizes || state.questTeamSizes,
                 proposedTeam: action.payload.proposedTeam || state.proposedTeam,
                 voteHistory: action.payload.voteHistory || state.voteHistory,
+                questReveal: action.payload.questReveal !== undefined ? action.payload.questReveal : state.questReveal,
                 winner: action.payload.winner ?? state.winner,
                 winReason: action.payload.winReason ?? state.winReason,
                 countdownStartTime: action.payload.countdownStartTime ?? state.countdownStartTime,
@@ -203,11 +205,6 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_QUEST_SUBMITTED_COUNT', payload: submittedCount });
         });
 
-        socket.on('quest-result', (data) => {
-            dispatch({ type: 'SET_QUEST_RESULT', payload: data });
-            dispatch({ type: 'UPDATE_STATE', payload: data.state });
-        });
-
         socket.on('assassination-result', (data) => {
             dispatch({ type: 'SET_ASSASSINATION_RESULT', payload: data });
             dispatch({ type: 'SET_FULL_REVEAL', payload: data.reveal });
@@ -225,7 +222,6 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_FULL_REVEAL', payload: null });
             dispatch({ type: 'SET_VOTES', payload: null });
             dispatch({ type: 'SET_VOTE_RESULT', payload: null });
-            dispatch({ type: 'SET_QUEST_RESULT', payload: null });
             dispatch({ type: 'SET_ASSASSINATION_RESULT', payload: null });
             dispatch({ type: 'CLEAR_SHOWING_RESULT' });
         });
@@ -248,7 +244,6 @@ export function GameProvider({ children }) {
             socket.off('vote-submitted');
             socket.off('vote-result');
             socket.off('quest-action-submitted');
-            socket.off('quest-result');
             socket.off('assassination-result');
             socket.off('game-over');
             socket.off('returned-to-lobby');
