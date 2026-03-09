@@ -36,7 +36,7 @@ export default function GameBoard() {
     const {
         phase, players, playerId, currentLeader, currentQuestIndex,
         rejectionTrack, maxRejections, questResults, proposedTeam,
-        isLeader, isHost, proposeTeam, endGame,
+        questTeamSizes, roleInfo, isLeader, isHost, proposeTeam, endGame,
         showingResult, voteResult, questResult,
         winner, fullReveal, voteHistory, leaveRoom,
     } = useGame();
