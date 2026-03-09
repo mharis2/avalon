@@ -5,10 +5,14 @@ import './QuestReveal.css';
 export default function QuestReveal() {
     const { questResult } = useGame();
     // cardState matches actions.length. Each index can be:
-    // 'hidden' -> 'focus' (flying up + flipping) -> 'settled' (moved to final row)
-    const [cardStates, setCardStates] = useState([]);
+    // 'hidden' -> 'focus' (fly up + flip centrally) -> 'settled' (results tray)
+    const [cardStates, setCardStates] = useState(() => {
+        return questResult && questResult.actions
+            ? Array(questResult.actions.length).fill('hidden')
+            : [];
+    });
+
     const [showResult, setShowResult] = useState(false);
-    // Tracks the current active background flash (e.g. 'success' or 'fail')
     const [bgFlash, setBgFlash] = useState(null);
 
     useEffect(() => {
@@ -16,8 +20,6 @@ export default function QuestReveal() {
 
         const totalCards = questResult.actions.length;
         if (totalCards === 0) return;
-
-        setCardStates(Array(totalCards).fill('hidden'));
 
         let timeouts = [];
 
@@ -33,7 +35,8 @@ export default function QuestReveal() {
             // 1. Trigger the card to fly up and flip centrally
             timeouts.push(setTimeout(() => {
                 setCardStates(prev => {
-                    const next = [...prev];
+                    // Sanity check just in case prev is suddenly empty
+                    const next = prev.length === totalCards ? [...prev] : Array(totalCards).fill('hidden');
                     next[i] = 'focus';
                     return next;
                 });
@@ -49,7 +52,7 @@ export default function QuestReveal() {
             // 3. Shrink the card down into the results tray
             timeouts.push(setTimeout(() => {
                 setCardStates(prev => {
-                    const next = [...prev];
+                    const next = prev.length === totalCards ? [...prev] : Array(totalCards).fill('hidden');
                     next[i] = 'settled';
                     return next;
                 });
@@ -72,6 +75,7 @@ export default function QuestReveal() {
     return (
         <div className={`quest-reveal-container ${bgFlash ? `flash-${bgFlash}` : ''}`}>
             {/* Cinematic Background overlay */}
+            <div className="app-background" />
             <div className="reveal-ambient-bg" />
 
             {!showResult ? (

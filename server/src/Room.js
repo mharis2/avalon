@@ -310,7 +310,7 @@ class Room {
             winState = { ...result, goToAssassination: false, gameOver: false };
         }
 
-        this.phase = nextPhase;
+        this.phase = PHASES.QUEST_REVEAL;
 
         return {
             actions,

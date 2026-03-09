@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import VotingPhase from './VotingPhase';
 import QuestPhase from './QuestPhase';
-import QuestReveal from './QuestReveal';
 import Assassination from './Assassination';
 import GameOver from './GameOver';
 import VoteHistory from './VoteHistory';
@@ -137,10 +136,6 @@ export default function GameBoard() {
                 </div>
             </div>
         );
-    }
-
-    if (showingResult === 'quest' && questResult) {
-        return <QuestReveal />;
     }
 
     if (phase === 'ASSASSINATION') {

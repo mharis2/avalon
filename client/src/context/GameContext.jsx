@@ -75,7 +75,7 @@ function reducer(state, action) {
         case 'SET_VOTE_RESULT':
             return { ...state, voteResult: action.payload, showingResult: 'vote' };
         case 'SET_QUEST_RESULT':
-            return { ...state, questResult: action.payload, showingResult: 'quest' };
+            return { ...state, questResult: action.payload };
         case 'SET_ASSASSINATION_RESULT':
             return { ...state, assassinationResult: action.payload };
         case 'SET_FULL_REVEAL':
@@ -191,11 +191,14 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_READY_COUNT', payload: readyCount });
         });
 
-        socket.on('phase-change', ({ state: s }) => {
+        socket.on('phase-change', ({ state: s, questResultData }) => {
             dispatch({ type: 'CLEAR_SHOWING_RESULT' });
             dispatch({ type: 'UPDATE_STATE', payload: s });
             dispatch({ type: 'SET_VOTED_COUNT', payload: 0 });
             dispatch({ type: 'SET_QUEST_SUBMITTED_COUNT', payload: 0 });
+            if (questResultData) {
+                dispatch({ type: 'SET_QUEST_RESULT', payload: questResultData });
+            }
         });
 
         socket.on('team-proposed', ({ state: s }) => {
@@ -212,22 +215,19 @@ export function GameProvider({ children }) {
             dispatch({ type: 'UPDATE_STATE', payload: data.state });
         });
 
-        socket.on('quest-result', (data) => {
-            dispatch({ type: 'SET_QUEST_RESULT', payload: data });
-            dispatch({ type: 'UPDATE_STATE', payload: data.state });
-        });
-
         socket.on('quest-action-submitted', ({ submittedCount }) => {
             dispatch({ type: 'SET_QUEST_SUBMITTED_COUNT', payload: submittedCount });
         });
 
         socket.on('assassination-result', (data) => {
+            dispatch({ type: 'CLEAR_SHOWING_RESULT' });
             dispatch({ type: 'SET_ASSASSINATION_RESULT', payload: data });
             dispatch({ type: 'SET_FULL_REVEAL', payload: data.reveal });
             dispatch({ type: 'UPDATE_STATE', payload: data.state });
         });
 
         socket.on('game-over', (data) => {
+            dispatch({ type: 'CLEAR_SHOWING_RESULT' });
             dispatch({ type: 'SET_FULL_REVEAL', payload: data.reveal });
             dispatch({ type: 'UPDATE_STATE', payload: data.state });
         });
@@ -259,7 +259,6 @@ export function GameProvider({ children }) {
             socket.off('team-proposed');
             socket.off('vote-submitted');
             socket.off('vote-result');
-            socket.off('quest-result');
             socket.off('quest-action-submitted');
             socket.off('assassination-result');
             socket.off('game-over');

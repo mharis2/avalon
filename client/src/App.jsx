@@ -5,6 +5,7 @@ import Lobby from './pages/Lobby';
 import Countdown from './components/Countdown';
 import RoleReveal from './components/RoleReveal';
 import GameBoard from './components/GameBoard';
+import QuestReveal from './components/QuestReveal';
 import RulesDrawer from './components/RulesDrawer';
 import MiniGame from './components/MiniGame';
 import './App.css';
@@ -58,6 +59,9 @@ function AppContent() {
         case 'ASSASSINATION':
         case 'GAME_OVER':
             content = <GameBoard />;
+            break;
+        case 'QUEST_REVEAL':
+            content = <QuestReveal />;
             break;
         default:
             content = <Home />;

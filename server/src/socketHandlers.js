@@ -47,9 +47,10 @@ function resolveVotesAndBroadcast(io, room) {
 function resolveQuestAndBroadcast(io, room) {
     const questResult = room.resolveQuest();
 
-    // Broadcast the result purely as UI overlay
-    io.to(room.code).emit('quest-result', {
-        ...questResult,
+    // Broadcast the phase change to QUEST_REVEAL along with the quest actions/result
+    io.to(room.code).emit('phase-change', {
+        phase: room.phase,
+        questResultData: questResult,
         state: room.getPublicState(),
     });
 
@@ -59,6 +60,8 @@ function resolveQuestAndBroadcast(io, room) {
 
     setTimeout(() => {
         const { result, nextPhase } = questResult;
+
+        room.phase = nextPhase;
 
         if (nextPhase === PHASES.GAME_OVER) {
             io.to(room.code).emit('game-over', {
