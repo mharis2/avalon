@@ -62,7 +62,8 @@ export default function QuestReveal() {
         }, RESULT_DELAY));
 
         return () => timeouts.forEach(clearTimeout);
-    }, [questReveal]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [questReveal?.startTime]);
 
     if (!questReveal || !questReveal.actions) return null;
 

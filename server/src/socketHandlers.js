@@ -324,7 +324,9 @@ function setupSocketHandlers(io, roomManager) {
 
                 // All actions in → resolve
                 if (room.allQuestActionsIn()) {
-                    resolveQuestAndBroadcast(io, room, roomManager);
+                    setTimeout(() => {
+                        resolveQuestAndBroadcast(io, room, roomManager);
+                    }, 2000); // 2-second transition phase
                 }
 
                 callback?.({ success: true });
