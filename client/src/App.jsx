@@ -55,7 +55,6 @@ function AppContent() {
         case 'TEAM_PROPOSAL':
         case 'VOTING':
         case 'QUEST':
-        case 'QUEST_REVEAL':
         case 'ASSASSINATION':
         case 'GAME_OVER':
             content = <GameBoard />;

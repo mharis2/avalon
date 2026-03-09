@@ -45,23 +45,20 @@ function resolveVotesAndBroadcast(io, room) {
 }
 
 function resolveQuestAndBroadcast(io, room) {
-    const questReveal = room.resolveQuest();
+    const questResult = room.resolveQuest();
 
-    // Emitting phase-change triggers the client's QUEST_REVEAL component
-    io.to(room.code).emit('phase-change', {
-        phase: room.phase,
+    // Broadcast the result purely as UI overlay
+    io.to(room.code).emit('quest-result', {
+        ...questResult,
         state: room.getPublicState(),
     });
 
     // Animation: 1.5s per card + 4s for final reveal banner
-    const teamSize = questReveal.actions.length;
+    const teamSize = questResult.actions.length;
     const animationDuration = (teamSize * 1500) + 4000;
 
     setTimeout(() => {
-        // Now officially finish the quest reveal phase on the server
-        room.finishQuestReveal();
-
-        const { result, nextPhase } = questReveal;
+        const { result, nextPhase } = questResult;
 
         if (nextPhase === PHASES.GAME_OVER) {
             io.to(room.code).emit('game-over', {
@@ -71,6 +68,15 @@ function resolveQuestAndBroadcast(io, room) {
                 state: room.getPublicState(),
             });
         } else {
+            // Apply preparation for TEAM_PROPOSAL if that is the next phase
+            if (nextPhase === PHASES.TEAM_PROPOSAL) {
+                room.advanceLeader();
+                room.rejectionTrack = 0;
+                room.proposedTeam = [];
+                room.votes = {};
+                room.questActions = {};
+            }
+
             // Auto-advance to assassination or next proposal
             io.to(room.code).emit('phase-change', {
                 phase: room.phase,

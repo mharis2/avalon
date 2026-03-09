@@ -55,8 +55,6 @@ function runTest(playerCount) {
             });
             assert.strictEqual(room.allQuestActionsIn(), true, "Should have all actions in");
             const result = room.resolveQuest();
-            assert.strictEqual(room.phase, PHASES.QUEST_REVEAL);
-            room.finishQuestReveal();
         } else if (room.phase === PHASES.ASSASSINATION) {
             // Find assassin
             const assassin = room.players.find(p => room.roleAssignments[p.id].key === 'assassin');
@@ -109,7 +107,6 @@ function randomSim(playerCount, iterations) {
                         }
                     });
                     room.resolveQuest();
-                    room.finishQuestReveal();
                 } else if (room.phase === PHASES.ASSASSINATION) {
                     const assassin = room.players.find(p => room.roleAssignments[p.id].key === 'assassin');
                     let target = room.players.filter(p => p.id !== assassin.id)[Math.floor(Math.random() * (playerCount - 1))];

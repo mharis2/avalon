@@ -25,7 +25,6 @@ const initialState = {
     winReason: null,
     roleInfo: null,
     countdownStartTime: null,
-    questReveal: null,
     // UI state
     votes: null,
     voteResult: null,
@@ -64,7 +63,6 @@ function reducer(state, action) {
                 questTeamSizes: action.payload.questTeamSizes || state.questTeamSizes,
                 proposedTeam: action.payload.proposedTeam || state.proposedTeam,
                 voteHistory: action.payload.voteHistory || state.voteHistory,
-                questReveal: action.payload.questReveal !== undefined ? action.payload.questReveal : state.questReveal,
                 winner: action.payload.winner ?? state.winner,
                 winReason: action.payload.winReason ?? state.winReason,
                 countdownStartTime: action.payload.countdownStartTime ?? state.countdownStartTime,
@@ -214,6 +212,11 @@ export function GameProvider({ children }) {
             dispatch({ type: 'UPDATE_STATE', payload: data.state });
         });
 
+        socket.on('quest-result', (data) => {
+            dispatch({ type: 'SET_QUEST_RESULT', payload: data });
+            dispatch({ type: 'UPDATE_STATE', payload: data.state });
+        });
+
         socket.on('quest-action-submitted', ({ submittedCount }) => {
             dispatch({ type: 'SET_QUEST_SUBMITTED_COUNT', payload: submittedCount });
         });
@@ -256,6 +259,7 @@ export function GameProvider({ children }) {
             socket.off('team-proposed');
             socket.off('vote-submitted');
             socket.off('vote-result');
+            socket.off('quest-result');
             socket.off('quest-action-submitted');
             socket.off('assassination-result');
             socket.off('game-over');

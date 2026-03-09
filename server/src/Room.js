@@ -42,7 +42,6 @@ class Room {
         this.votes = {};               // { playerId: 'approve'|'reject' }
         this.questActions = {};        // { playerId: 'success'|'fail' }
         this.voteHistory = [];         // Array of { leader, team, votes, approved }
-        this.questReveal = null;
         this.winner = null;
         this.winReason = null;
         this.assassinationTarget = null;
@@ -311,36 +310,16 @@ class Room {
             winState = { ...result, goToAssassination: false, gameOver: false };
         }
 
-        this.phase = PHASES.QUEST_REVEAL;
-        this.questReveal = {
-            startTime: Date.now(),
+        this.phase = nextPhase;
+
+        return {
             actions,
             result: winState,
             nextPhase,
         };
-
-        return this.questReveal;
     }
 
-    finishQuestReveal() {
-        if (!this.questReveal) return;
 
-        const { result, nextPhase } = this.questReveal;
-
-        this.phase = nextPhase;
-        if (nextPhase === PHASES.GAME_OVER) {
-            this.winner = result.winner;
-            this.winReason = result.winReason;
-        } else if (nextPhase === PHASES.TEAM_PROPOSAL) {
-            this.advanceLeader();
-            this.rejectionTrack = 0;
-            this.proposedTeam = [];
-            this.votes = {};
-            this.questActions = {};
-        }
-
-        this.questReveal = null;
-    }
 
     // ─── Assassination ─────────────────────────────────────────────
     assassinate(assassinId, targetId) {
@@ -399,7 +378,6 @@ class Room {
         this.votes = {};
         this.questActions = {};
         this.voteHistory = [];
-        this.questReveal = null;
         this.winner = null;
         this.winReason = null;
         this.assassinationTarget = null;
@@ -430,13 +408,6 @@ class Room {
             questResults: this.questResults,
             proposedTeam: this.proposedTeam,
             voteHistory: this.voteHistory,
-            questReveal: this.questReveal ? {
-                ...this.questReveal,
-                // The transition phase delays the phase-change by 2000ms. 
-                // We subtract 2000ms from elapsed so the UI animation logic starts at ~0ms 
-                // when the client actually receives the QUEST_REVEAL phase.
-                elapsed: Math.max(0, Date.now() - this.questReveal.startTime - 2000)
-            } : null,
             winner: this.winner,
             winReason: this.winReason,
             questTeamSizes: QUEST_TEAM_SIZES[this.players.length] || [],

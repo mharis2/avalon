@@ -26,7 +26,6 @@ const PHASE_RULES = {
         title: '⚔ Quest',
         rule: 'Team members secretly play Success or Fail. Good MUST play Success. Evil can choose either. Just 1 Fail card fails the quest (2 needed on Quest 4 with 7+ players).',
     },
-    QUEST_REVEAL: null, // No rule text needed during animation
     ASSASSINATION: {
         title: '🗡️ Assassination',
         rule: 'Good passed 3 quests! But the Assassin gets one shot to identify Merlin. If correct, Evil steals the win!',
@@ -37,8 +36,8 @@ export default function GameBoard() {
     const {
         phase, players, playerId, currentLeader, currentQuestIndex,
         rejectionTrack, maxRejections, questResults, proposedTeam,
-        questTeamSizes, roleInfo, isLeader, isHost, proposeTeam, endGame,
-        showingResult, voteResult, questReveal,
+        isLeader, isHost, proposeTeam, endGame,
+        showingResult, voteResult, questResult,
         winner, fullReveal, voteHistory, leaveRoom,
     } = useGame();
 
@@ -140,7 +139,7 @@ export default function GameBoard() {
         );
     }
 
-    if (phase === 'QUEST_REVEAL' && questReveal) {
+    if (showingResult === 'quest' && questResult) {
         return <QuestReveal />;
     }
 

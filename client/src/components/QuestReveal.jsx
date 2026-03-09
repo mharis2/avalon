@@ -3,7 +3,7 @@ import { useGame } from '../context/GameContext';
 import './QuestReveal.css';
 
 export default function QuestReveal() {
-    const { questReveal } = useGame();
+    const { questResult } = useGame();
     // cardState matches actions.length. Each index can be:
     // 'hidden' -> 'focus' (flying up + flipping) -> 'settled' (moved to final row)
     const [cardStates, setCardStates] = useState([]);
@@ -12,9 +12,9 @@ export default function QuestReveal() {
     const [bgFlash, setBgFlash] = useState(null);
 
     useEffect(() => {
-        if (!questReveal || !questReveal.actions) return;
+        if (!questResult || !questResult.actions) return;
 
-        const totalCards = questReveal.actions.length;
+        const totalCards = questResult.actions.length;
         if (totalCards === 0) return;
 
         setCardStates(Array(totalCards).fill('hidden'));
@@ -27,10 +27,8 @@ export default function QuestReveal() {
         const SETTLE_OFFSET = 1200; // When to settle the card into the grid
         const RESULT_DELAY = (totalCards * NEXT_CARD_DELAY) + 1000;
 
-        questReveal.actions.forEach((action, i) => {
-            // Apply elapsed time subtraction to prevent skips if the client received the event late.
-            const elapsed = questReveal.elapsed || 0;
-            const startTime = Math.max(0, i * NEXT_CARD_DELAY - elapsed);
+        questResult.actions.forEach((action, i) => {
+            const startTime = i * NEXT_CARD_DELAY;
 
             // 1. Trigger the card to fly up and flip centrally
             timeouts.push(setTimeout(() => {
@@ -46,7 +44,7 @@ export default function QuestReveal() {
                 setBgFlash(action);
                 // Clear flash after 400ms
                 timeouts.push(setTimeout(() => setBgFlash(null), 400));
-            }, Math.max(0, startTime + FLIP_FLASH_OFFSET - elapsed)));
+            }, startTime + FLIP_FLASH_OFFSET));
 
             // 3. Shrink the card down into the results tray
             timeouts.push(setTimeout(() => {
@@ -55,21 +53,20 @@ export default function QuestReveal() {
                     next[i] = 'settled';
                     return next;
                 });
-            }, Math.max(0, startTime + SETTLE_OFFSET - elapsed)));
+            }, startTime + SETTLE_OFFSET));
         });
 
         // 4. Finally show the big overlay result
         timeouts.push(setTimeout(() => {
             setShowResult(true);
-        }, Math.max(0, RESULT_DELAY - elapsed)));
+        }, RESULT_DELAY));
 
         return () => timeouts.forEach(clearTimeout);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [questReveal?.startTime]);
+    }, []); // Empty dependency array because we only want to mount this sequence ONCE
 
-    if (!questReveal || !questReveal.actions) return null;
+    if (!questResult || !questResult.actions) return null;
 
-    const { actions, result } = questReveal;
+    const { actions, result } = questResult;
     const { passed, requiresTwoFails, failCount, successCount } = result || {};
 
     return (
