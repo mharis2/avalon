@@ -316,14 +316,22 @@ function setupSocketHandlers(io, roomManager) {
                 const mapping = roomManager.getPlayerMapping(socket.id);
                 room.submitQuestAction(mapping.playerId, action);
 
-                // Notify progress
-                io.to(room.code).emit('quest-action-submitted', {
-                    submittedCount: Object.keys(room.questActions).length,
-                    totalTeamSize: room.proposedTeam.length,
-                });
+                // We emit the final count when checking all actions in below
+                if (!room.allQuestActionsIn()) {
+                    io.to(room.code).emit('quest-action-submitted', {
+                        submittedCount: Object.keys(room.questActions).length,
+                        totalTeamSize: room.proposedTeam.length,
+                    });
+                }
 
                 // All actions in → resolve
                 if (room.allQuestActionsIn()) {
+                    // Update client UI to "All cards gathered" by sending state update
+                    io.to(room.code).emit('quest-action-submitted', {
+                        submittedCount: Object.keys(room.questActions).length,
+                        totalTeamSize: room.proposedTeam.length,
+                    });
+
                     setTimeout(() => {
                         resolveQuestAndBroadcast(io, room, roomManager);
                     }, 2000); // 2-second transition phase

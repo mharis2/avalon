@@ -28,7 +28,9 @@ export default function QuestReveal() {
         const RESULT_DELAY = (totalCards * NEXT_CARD_DELAY) + 1000;
 
         questReveal.actions.forEach((action, i) => {
-            const startTime = i * NEXT_CARD_DELAY;
+            // Apply elapsed time subtraction to prevent skips if the client received the event late.
+            const elapsed = questReveal.elapsed || 0;
+            const startTime = Math.max(0, i * NEXT_CARD_DELAY - elapsed);
 
             // 1. Trigger the card to fly up and flip centrally
             timeouts.push(setTimeout(() => {
@@ -44,7 +46,7 @@ export default function QuestReveal() {
                 setBgFlash(action);
                 // Clear flash after 400ms
                 timeouts.push(setTimeout(() => setBgFlash(null), 400));
-            }, startTime + FLIP_FLASH_OFFSET));
+            }, Math.max(0, startTime + FLIP_FLASH_OFFSET - elapsed)));
 
             // 3. Shrink the card down into the results tray
             timeouts.push(setTimeout(() => {
@@ -53,13 +55,13 @@ export default function QuestReveal() {
                     next[i] = 'settled';
                     return next;
                 });
-            }, startTime + SETTLE_OFFSET));
+            }, Math.max(0, startTime + SETTLE_OFFSET - elapsed)));
         });
 
         // 4. Finally show the big overlay result
         timeouts.push(setTimeout(() => {
             setShowResult(true);
-        }, RESULT_DELAY));
+        }, Math.max(0, RESULT_DELAY - elapsed)));
 
         return () => timeouts.forEach(clearTimeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps

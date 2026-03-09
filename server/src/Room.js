@@ -432,7 +432,10 @@ class Room {
             voteHistory: this.voteHistory,
             questReveal: this.questReveal ? {
                 ...this.questReveal,
-                elapsed: Date.now() - this.questReveal.startTime
+                // The transition phase delays the phase-change by 2000ms. 
+                // We subtract 2000ms from elapsed so the UI animation logic starts at ~0ms 
+                // when the client actually receives the QUEST_REVEAL phase.
+                elapsed: Math.max(0, Date.now() - this.questReveal.startTime - 2000)
             } : null,
             winner: this.winner,
             winReason: this.winReason,
