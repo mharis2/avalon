@@ -75,7 +75,10 @@ function reducer(state, action) {
         case 'SET_VOTE_RESULT':
             return { ...state, voteResult: action.payload, showingResult: 'vote' };
         case 'SET_QUEST_RESULT':
-            return { ...state, questResult: action.payload };
+            if (action.payload) {
+                return { ...state, questResult: action.payload, showingResult: 'quest' };
+            }
+            return { ...state, questResult: null };
         case 'SET_ASSASSINATION_RESULT':
             return { ...state, assassinationResult: action.payload };
         case 'SET_FULL_REVEAL':
@@ -192,14 +195,17 @@ export function GameProvider({ children }) {
         });
 
         socket.on('phase-change', ({ state: s, questResultData }) => {
-            dispatch({ type: 'CLEAR_SHOWING_RESULT' });
+            // Only clear showing-result when this is NOT the quest-reveal transition.
+            // Quest reveal sets its own showingResult atomically via SET_QUEST_RESULT.
+            if (!questResultData) {
+                dispatch({ type: 'CLEAR_SHOWING_RESULT' });
+            }
             dispatch({ type: 'UPDATE_STATE', payload: s });
             dispatch({ type: 'SET_VOTED_COUNT', payload: 0 });
             dispatch({ type: 'SET_QUEST_SUBMITTED_COUNT', payload: 0 });
             if (questResultData) {
                 dispatch({ type: 'SET_QUEST_RESULT', payload: questResultData });
             } else if (s.phase !== 'QUEST_REVEAL') {
-                // Clear stale quest result when leaving the reveal phase
                 dispatch({ type: 'SET_QUEST_RESULT', payload: null });
             }
         });

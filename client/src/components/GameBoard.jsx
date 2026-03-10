@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import VotingPhase from './VotingPhase';
 import QuestPhase from './QuestPhase';
+import QuestReveal from './QuestReveal';
 import Assassination from './Assassination';
 import GameOver from './GameOver';
 import VoteHistory from './VoteHistory';
@@ -101,6 +102,10 @@ export default function GameBoard() {
     };
 
     // ─── Auto-advancing Result Overlays (no Continue button) ─────
+    if (showingResult === 'quest' && questResult) {
+        return <QuestReveal />;
+    }
+
     if (showingResult === 'vote' && voteResult) {
         return (
             <div className="page-center">
