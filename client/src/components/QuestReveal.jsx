@@ -1,189 +1,178 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import './QuestReveal.css';
 
-// ─── Timing Constants (ms) ──────────────────────────────────────────
-const INITIAL_PAUSE = 800;       // Dramatic pause before first card
-const FLY_UP_DURATION = 700;     // Card flies to center
-const FLIP_DELAY = 300;          // Brief pause before card flips
-const FLIP_DURATION = 800;       // The 3D flip itself
-const HOLD_REVEAL = 1200;        // Time to HOLD the revealed card in center
-const SETTLE_DURATION = 500;     // Card shrinks into tray
-const GAP_BETWEEN_CARDS = 400;   // Pause between one card settling and next starting
-const RESULT_PAUSE = 1200;       // Pause after last card before showing final result
-const PER_CARD = FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL + SETTLE_DURATION + GAP_BETWEEN_CARDS;
-
 /**
- * QuestReveal — Cinematic card-flip overlay.
+ * QuestReveal — CSS-driven cinematic card reveal overlay.
  *
- * IMPORTANT: This component is rendered conditionally by App.jsx via:
- *   {questResult && phase === 'QUEST_REVEAL' && <QuestReveal />}
- * So `questResult` is GUARANTEED to be set when this component mounts.
+ * Architecture (completely different from the old approach):
+ *   - ALL visual animation is driven by CSS @keyframes + animation-delay
+ *   - Cards are rendered once at mount; CSS auto-staggers them via --i custom property
+ *   - React manages only 3 lightweight states: phase, revealedCount, flash
+ *   - No per-card state arrays, no 5-state-per-card timeout chains
+ *   - JS timeouts only track metadata (counter/tally), NOT visual animation
+ *   - This makes animation immune to React re-render timing issues
  *
- * We freeze the data at mount time with useState(initializer) to be
- * completely immune to context updates and React StrictMode double-mounting.
- * The animation runs from a single useEffect([], ...) with its own cleanup.
+ * Timing constants MUST match the CSS animation durations/delays below.
  */
+
+// ─── Timing (ms) ────────────────────────────────────────────────────
+const INTRO_MS    = 1800;   // Suspenseful intro duration
+const PER_CARD_MS = 3200;   // Full card cycle: fly(700) + pause(300) + flip(800) + hold(900) + exit(500)
+const FLIP_DONE   = 1800;   // Within-card offset when flip completes (700+300+800)
+const CARD_EXIT   = 2800;   // Within-card offset when card exits → tray fills
+const RESULT_WAIT = 1200;   // Pause after last card before result banner
+
 export default function QuestReveal() {
     const { questResult } = useGame();
 
-    // ── Freeze data at mount time ──────────────────────────────────
+    // ── Freeze data at mount — immune to context updates ────────
     const [data] = useState(() => questResult);
     const actions = data?.actions || [];
-    const result = data?.result || {};
-    const totalCards = actions.length;
+    const result  = data?.result  || {};
+    const total   = actions.length;
 
-    // ── Animation states ──────────────────────────────────────────
-    const [cardStates, setCardStates] = useState(() => Array(totalCards).fill('hidden'));
-    const [showResult, setShowResult] = useState(false);
-    const [bgFlash, setBgFlash] = useState(null);
-    const [drumroll, setDrumroll] = useState(true);
+    // ── Minimal state: phase + counter + screen flash ───────────
+    const [phase, setPhase]            = useState('intro');
+    const [revealedCount, setRevealed] = useState(0);
+    const [flash, setFlash]            = useState('');
 
-    // ── Single mount-only effect — drives the entire animation ────
+    // ── Pre-compute running success/fail totals ─────────────────
+    const runningTotals = useMemo(() => {
+        let s = 0, f = 0;
+        return actions.map(a => {
+            if (a === 'success') s++; else f++;
+            return { s, f };
+        });
+    }, [actions]);
+
+    // ── Effect 1: Intro → Cards transition ──────────────────────
     useEffect(() => {
-        if (totalCards === 0) return;
+        if (!total) return;
+        const t = setTimeout(() => setPhase('cards'), INTRO_MS);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-        const timeouts = [];
-        const schedule = (fn, delay) => {
-            timeouts.push(setTimeout(fn, delay));
-        };
-
-        // Dismiss drumroll just before first card
-        schedule(() => setDrumroll(false), Math.max(INITIAL_PAUSE - 200, 100));
+    // ── Effect 2: Cards phase — sync JS metadata with CSS ───────
+    //    Starts when 'cards' phase mounts, so JS timers and CSS
+    //    animation-delay both measure from the same origin point.
+    useEffect(() => {
+        if (phase !== 'cards' || !total) return;
+        const timers = [];
+        const sched = (fn, ms) => timers.push(setTimeout(fn, ms));
 
         actions.forEach((action, i) => {
-            const t = INITIAL_PAUSE + i * PER_CARD;
-
-            // 1. Card flies up from bottom to center
-            schedule(() => {
-                setCardStates(prev => { const n = [...prev]; n[i] = 'flying'; return n; });
-            }, t);
-
-            // 2. Card starts its 3D flip
-            schedule(() => {
-                setCardStates(prev => { const n = [...prev]; n[i] = 'flipping'; return n; });
-            }, t + FLY_UP_DURATION + FLIP_DELAY);
-
-            // 3. Card is fully revealed — hold in center + screen flash
-            schedule(() => {
-                setCardStates(prev => { const n = [...prev]; n[i] = 'revealed'; return n; });
-                setBgFlash(action);
-                schedule(() => setBgFlash(null), 500);
-            }, t + FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION);
-
-            // 4. Card settles into the tray
-            schedule(() => {
-                setCardStates(prev => { const n = [...prev]; n[i] = 'settling'; return n; });
-            }, t + FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL);
-
-            // 5. Mark as fully settled
-            schedule(() => {
-                setCardStates(prev => { const n = [...prev]; n[i] = 'settled'; return n; });
-            }, t + FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL + SETTLE_DURATION);
+            const base = i * PER_CARD_MS;
+            // Screen flash when flip completes
+            sched(() => setFlash(action),    base + FLIP_DONE);
+            sched(() => setFlash(''),        base + FLIP_DONE + 600);
+            // Tray fills when card exits
+            sched(() => setRevealed(i + 1),  base + CARD_EXIT);
         });
 
-        // 6. Show the big dramatic result banner
-        schedule(() => setShowResult(true), INITIAL_PAUSE + totalCards * PER_CARD + RESULT_PAUSE);
+        // Transition to result banner
+        sched(() => setPhase('result'), total * PER_CARD_MS + RESULT_WAIT);
 
-        return () => timeouts.forEach(clearTimeout);
+        return () => timers.forEach(clearTimeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Mount-only: data is frozen via useState initializer above
+    }, [phase]);
 
-    // ── Render ────────────────────────────────────────────────────
-    if (totalCards === 0) {
+    // ── Empty / loading state ───────────────────────────────────
+    if (!total) {
         return (
-            <div className="quest-reveal-container">
-                <div className="app-background" />
-                <div className="reveal-ambient-bg" />
-                <p className="reveal-waiting-text animate-pulse">Gathering quest cards…</p>
+            <div className="qr-overlay">
+                <div className="qr-bg" />
+                <p className="qr-loading animate-pulse">Gathering quest cards…</p>
             </div>
         );
     }
 
-    const { passed, requiresTwoFails, failCount, successCount } = result;
+    const { passed, failCount, successCount, requiresTwoFails } = result;
+    const totals = revealedCount > 0 ? runningTotals[revealedCount - 1] : null;
+
+    const overlayClass = [
+        'qr-overlay',
+        flash && `qr-flash-${flash}`,
+        phase === 'result' && (passed ? 'qr-bg-pass' : 'qr-bg-fail'),
+    ].filter(Boolean).join(' ');
 
     return (
-        <div className={`quest-reveal-container ${bgFlash ? `flash-${bgFlash}` : ''}`}>
-            <div className="app-background" />
-            <div className="reveal-ambient-bg" />
+        <div className={overlayClass}>
+            <div className="qr-bg" />
 
-            {!showResult ? (
-                <div className="quest-reveal-arena">
-                    {/* Drumroll / suspense text */}
-                    {drumroll && (
-                        <div className="reveal-drumroll animate-fade-in">
-                            <h2 className="heading-display reveal-drumroll-title">⚔ Quest Cards Collected</h2>
-                            <p className="reveal-drumroll-sub animate-pulse">Preparing to reveal…</p>
+            {/* ═══ INTRO ═══════════════════════════════════════════════ */}
+            {phase === 'intro' && (
+                <div className="qr-intro">
+                    <h2 className="qr-intro-title heading-display">⚔ The Quest Cards Are In</h2>
+                    <p className="qr-intro-sub animate-pulse">Preparing to reveal…</p>
+                </div>
+            )}
+
+            {/* ═══ CARDS (CSS-animated) ═════════════════════════════════ */}
+            {phase === 'cards' && (
+                <>
+                    {/* HUD: card counter + running tally */}
+                    <div className="qr-hud">
+                        <div className="qr-counter">
+                            Card {Math.min(revealedCount + (revealedCount < total ? 1 : 0), total)} of {total}
                         </div>
-                    )}
-
-                    {/* Card counter */}
-                    {!drumroll && (
-                        <div className="reveal-card-counter animate-fade-in">
-                            <span>Card {Math.min(cardStates.filter(s => s !== 'hidden').length, totalCards)} of {totalCards}</span>
-                        </div>
-                    )}
-
-                    {/* The settled cards tray at the bottom */}
-                    <div className="reveal-cards-tray">
-                        {actions.map((action, index) => {
-                            const isSettled = cardStates[index] === 'settled' || cardStates[index] === 'settling';
-                            return (
-                                <div
-                                    key={`tray-${index}`}
-                                    className={`reveal-tray-slot ${isSettled ? 'filled' : ''}`}
-                                >
-                                    {isSettled && (
-                                        <div className={`tray-card tray-card-${action} animate-pop-in`}>
-                                            <span className="tray-card-icon">{action === 'success' ? '✓' : '✗'}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                        {totals && (
+                            <div className="qr-tally" key={revealedCount}>
+                                <span className="qr-tally-s">✓ {totals.s} Success</span>
+                                <span className="qr-tally-f">✗ {totals.f} Fail</span>
+                            </div>
+                        )}
                     </div>
 
-                    {/* The active focus card in the center */}
-                    {actions.map((action, index) => {
-                        const state = cardStates[index];
-                        if (state !== 'flying' && state !== 'flipping' && state !== 'revealed') return null;
-
-                        return (
-                            <div
-                                key={`focus-${index}`}
-                                className={`reveal-focus-card reveal-${action} focus-state-${state}`}
-                            >
-                                <div className={`reveal-focus-inner ${state === 'flipping' || state === 'revealed' ? 'do-flip' : ''}`}>
-                                    <div className="reveal-focus-front">?</div>
-                                    <div className="reveal-focus-back">
-                                        <span className="focus-icon">{action === 'success' ? '✓' : '✗'}</span>
-                                        <span className="focus-label">{action === 'success' ? 'SUCCESS' : 'FAIL'}</span>
-                                    </div>
+                    {/* Cards — ALL rendered at once; CSS staggers via --i */}
+                    {actions.map((action, i) => (
+                        <div key={i} className="qr-card" style={{ '--i': i }}>
+                            <div className="qr-flipper">
+                                <div className="qr-face qr-front">
+                                    <span className="qr-front-symbol">?</span>
+                                </div>
+                                <div className={`qr-face qr-back qr-back-${action}`}>
+                                    <span className="qr-back-icon">{action === 'success' ? '✓' : '✗'}</span>
+                                    <span className="qr-back-text">{action === 'success' ? 'SUCCESS' : 'FAIL'}</span>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className={`quest-reveal-result ${passed ? 'result-success-theme' : 'result-fail-theme'}`}>
-                    <div className="result-backdrop" />
-                    <h1 className="heading-display final-result-title">
+                        </div>
+                    ))}
+
+                    {/* Settled-cards tray */}
+                    <div className="qr-tray">
+                        {actions.map((action, i) => (
+                            <div key={i} className={`qr-tray-slot ${i < revealedCount ? 'filled' : ''}`}>
+                                {i < revealedCount && (
+                                    <div className={`qr-mini qr-mini-${action}`}>
+                                        {action === 'success' ? '✓' : '✗'}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* ═══ RESULT ══════════════════════════════════════════════ */}
+            {phase === 'result' && (
+                <div className={`qr-result ${passed ? 'qr-pass' : 'qr-fail'}`}>
+                    <h1 className="qr-result-title heading-display">
                         {passed ? '🏰 Quest Succeeded!' : '🔥 Quest Failed!'}
                     </h1>
-
-                    <div className="result-summary-cards">
-                        <div className="summary-card-group">
-                            <span className="summary-count">{successCount}</span>
-                            <span className="summary-icon success-text">✓ Success</span>
+                    <div className="qr-result-counts">
+                        <div className="qr-count-group">
+                            <span className="qr-count-num">{successCount}</span>
+                            <span className="qr-count-lbl qr-s-clr">✓ Success</span>
                         </div>
-                        <div className="summary-card-group">
-                            <span className="summary-count">{failCount}</span>
-                            <span className="summary-icon fail-text">✗ Fail</span>
+                        <div className="qr-count-group">
+                            <span className="qr-count-num">{failCount}</span>
+                            <span className="qr-count-lbl qr-f-clr">✗ Fail</span>
                         </div>
                     </div>
-
                     {requiresTwoFails && (
-                        <p className="requires-two-fails-note">⚠ This quest required 2 fails to fail.</p>
+                        <p className="qr-note">⚠ This quest required 2 fails to fail.</p>
                     )}
                 </div>
             )}

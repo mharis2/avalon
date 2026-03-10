@@ -7,7 +7,12 @@ function generateId() {
 
 // ─── Auto-advance helpers ────────────────────────────────────────────
 const VOTE_RESULT_DELAY = 4000;   // Show vote result for 4 seconds
-const QUEST_RESULT_DELAY = 5000;  // Show quest result for 5 seconds
+
+// Quest reveal timing — must match client QuestReveal.jsx constants
+const QR_INTRO_MS    = 1800;   // Suspenseful intro text
+const QR_PER_CARD_MS = 3200;   // Per-card animation cycle
+const QR_RESULT_WAIT = 1200;   // Pause after last card
+const QR_RESULT_VIEW = 3500;   // Time to read the result banner
 
 function resolveVotesAndBroadcast(io, room) {
     const result = room.resolveVotes();
@@ -54,12 +59,10 @@ function resolveQuestAndBroadcast(io, room) {
         state: room.getPublicState(),
     });
 
-    // Animation timing must match the client's QuestReveal component:
-    // Per card: flyUp(700) + flipDelay(300) + flip(800) + hold(1200) + settle(500) + gap(400) = 3900ms
-    // Total: initialPause(800) + (cards * 3900) + resultPause(1200) + resultViewTime(3000)
+    // Animation timing matches the client's CSS-driven QuestReveal component:
+    // Total = intro + (cards × perCard) + resultWait + resultView
     const teamSize = questResult.actions.length;
-    const perCard = 700 + 300 + 800 + 1200 + 500 + 400;
-    const animationDuration = 800 + (teamSize * perCard) + 1200 + 3000;
+    const animationDuration = QR_INTRO_MS + (teamSize * QR_PER_CARD_MS) + QR_RESULT_WAIT + QR_RESULT_VIEW;
 
     setTimeout(() => {
         const { result, nextPhase } = questResult;
