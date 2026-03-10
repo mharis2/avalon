@@ -201,7 +201,8 @@ async function runTest() {
         pass(`Phase: QUEST_REVEAL — cards: [${qr.actions.join(', ')}], passed: ${qr.result.passed}, fails: ${qr.result.failCount}, successes: ${qr.result.successCount}`);
 
         // 12. Verify animation timing — server should auto-advance after animation
-        const expectedDuration = 1800 + (qr.actions.length * 3200) + 1200 + 3500;
+        // Simple timing: countdown(4 steps × 1s) + cards(2 steps × 1s each) + result(3.5s)
+        const expectedDuration = (4 + qr.actions.length * 2) * 1000 + 3500;
         log(`Waiting for server auto-advance (expected ~${expectedDuration}ms)...`);
         const startTime = Date.now();
         const nextPhasePromises = bots.map(b => waitForEvent(b, 'phase-change', expectedDuration + 5000));
