@@ -258,31 +258,38 @@ export default function GameBoard() {
             {/* Game State Clarity Banner */}
             <div className="gb-clarity-banner glass-card animate-fade-in">
                 <div className="gb-clarity-row">
-                    <span className="gb-clarity-label">👑 Leader:</span>
+                    <span className="gb-clarity-label">Current Leader:</span>
                     <span className="gb-clarity-value">{currentLeader?.name || 'Loading...'}</span>
                     <span className="gb-clarity-sub">({requiredTeamSize} players needed)</span>
                 </div>
                 {voteHistory.length > 0 && (
                     <div className="gb-clarity-row">
-                        <span className="gb-clarity-label">⬅️ Last Team:</span>
+                        <span className="gb-clarity-label">Previous Team:</span>
                         <span className="gb-clarity-value">
                             {voteHistory[voteHistory.length - 1].team.map(p => p.name).join(', ')}
                         </span>
                     </div>
                 )}
+                
+                <div className="gb-clarity-divider"></div>
+                
                 <div className="gb-clarity-row gb-clarity-quest-needs">
-                    <span className="gb-clarity-label">⚔ Current Quest Needs:</span>
-                    <span className="gb-clarity-value">
-                        {requiredTeamSize} cards.
-                        {currentQuestIndex === 3 && players.length >= 7
-                            ? ' 🛡️ 2 Fails required to fail.'
-                            : ' 🛡️ 1 Fail required to fail.'}
-                    </span>
+                    <span className="gb-clarity-label">Current Quest Requirements:</span>
+                    <div className="gb-clarity-requirements-stack">
+                        <span className="gb-clarity-value">
+                            {requiredTeamSize} Success cards required.
+                        </span>
+                        <span className="gb-clarity-sub-fail">
+                            {currentQuestIndex === 3 && players.length >= 7
+                                ? '(Requires 2 Fail cards to fail the quest)'
+                                : '(Requires 1 Fail card to fail the quest)'}
+                        </span>
+                    </div>
                 </div>
                 {currentQuestIndex < 4 && (
                     <div className="gb-clarity-row">
-                        <span className="gb-clarity-label">⏭ Next Quest:</span>
-                        <span className="gb-clarity-value">Needs {questTeamSizes?.[currentQuestIndex + 1]} players</span>
+                        <span className="gb-clarity-label gb-next-quest">Upcoming Quest:</span>
+                        <span className="gb-clarity-value">Requires {questTeamSizes?.[currentQuestIndex + 1]} players</span>
                     </div>
                 )}
             </div>

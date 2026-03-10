@@ -475,42 +475,72 @@
 .gb-clarity-banner {
     width: 100%;
     margin-bottom: 25px;
-    padding: 15px 20px;
+    padding: 20px 25px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    background: rgba(15, 15, 25, 0.6);
-    border-left: 4px solid var(--gold);
+    gap: 12px;
+    background: radial-gradient(circle at top left, rgba(25, 20, 15, 0.95), rgba(10, 8, 12, 0.98));
+    border: 2px solid #b8860b;
+    border-radius: 12px;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.6);
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
 }
 
 .gb-clarity-row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
-    font-size: 1rem;
+    gap: 10px;
+    font-size: 1.05rem;
+}
+
+.gb-clarity-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+    margin: 4px 0;
 }
 
 .gb-clarity-label {
-    color: var(--gold);
-    font-weight: 600;
+    color: #d4af37;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    text-transform: uppercase;
+    font-size: 0.9rem;
 }
 
 .gb-clarity-value {
-    color: #fff;
-    font-weight: 500;
+    color: #ebd3a6;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .gb-clarity-sub {
-    color: var(--text-muted);
-    font-size: 0.9rem;
+    color: rgba(235, 211, 166, 0.6);
+    font-size: 0.85rem;
     font-style: italic;
 }
 
+.gb-clarity-requirements-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gb-clarity-sub-fail {
+    color: #ff4d4d;
+    font-size: 0.85rem;
+    font-style: italic;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
 .gb-clarity-quest-needs {
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    align-items: flex-start;
+}
+
+.gb-next-quest {
+    color: rgba(212, 175, 55, 0.7);
 }
 
 .result-danger {
