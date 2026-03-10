@@ -11,7 +11,7 @@ import MiniGame from './components/MiniGame';
 import './App.css';
 
 function AppContent() {
-    const { phase, roomCode, isHost, miniGameEnabled, toggleMiniGame } = useGame();
+    const { phase, roomCode, isHost, miniGameEnabled, toggleMiniGame, questResult } = useGame();
     const [showRules, setShowRules] = useState(false);
     const [showMiniGame, setShowMiniGame] = useState(false);
     const [miniGameHighScore, setMiniGameHighScore] = useState(0);
@@ -56,12 +56,10 @@ function AppContent() {
         case 'TEAM_PROPOSAL':
         case 'VOTING':
         case 'QUEST':
+        case 'QUEST_REVEAL':
         case 'ASSASSINATION':
         case 'GAME_OVER':
             content = <GameBoard />;
-            break;
-        case 'QUEST_REVEAL':
-            content = <QuestReveal />;
             break;
         default:
             content = <Home />;
@@ -70,6 +68,8 @@ function AppContent() {
     return (
         <>
             {content}
+            {/* Quest Reveal cinematic overlay — floats on top of GameBoard */}
+            {questResult && phase === 'QUEST_REVEAL' && <QuestReveal key="quest-reveal" />}
             {/* Persistent buttons — available on ALL screens */}
             {phase !== 'COUNTDOWN' && (
                 <div className="global-bottom-buttons">

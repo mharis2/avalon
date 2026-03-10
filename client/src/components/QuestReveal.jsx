@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import './QuestReveal.css';
 
@@ -11,123 +11,86 @@ const HOLD_REVEAL = 1200;        // Time to HOLD the revealed card in center
 const SETTLE_DURATION = 500;     // Card shrinks into tray
 const GAP_BETWEEN_CARDS = 400;   // Pause between one card settling and next starting
 const RESULT_PAUSE = 1200;       // Pause after last card before showing final result
+const PER_CARD = FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL + SETTLE_DURATION + GAP_BETWEEN_CARDS;
 
-// Phases per card: fly-up → pause → flip → hold → settle → gap
-function getCardStartTime(index) {
-    const perCard = FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL + SETTLE_DURATION + GAP_BETWEEN_CARDS;
-    return INITIAL_PAUSE + index * perCard;
-}
-
-function getTotalAnimationTime(totalCards) {
-    const perCard = FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL + SETTLE_DURATION + GAP_BETWEEN_CARDS;
-    return INITIAL_PAUSE + totalCards * perCard + RESULT_PAUSE;
-}
-
+/**
+ * QuestReveal — Cinematic card-flip overlay.
+ *
+ * IMPORTANT: This component is rendered conditionally by App.jsx via:
+ *   {questResult && phase === 'QUEST_REVEAL' && <QuestReveal />}
+ * So `questResult` is GUARANTEED to be set when this component mounts.
+ *
+ * We freeze the data at mount time with useState(initializer) to be
+ * completely immune to context updates and React StrictMode double-mounting.
+ * The animation runs from a single useEffect([], ...) with its own cleanup.
+ */
 export default function QuestReveal() {
     const { questResult } = useGame();
 
-    // Card animation states: 'hidden' → 'flying' → 'flipping' → 'revealed' → 'settling' → 'settled'
-    const [cardStates, setCardStates] = useState([]);
+    // ── Freeze data at mount time ──────────────────────────────────
+    const [data] = useState(() => questResult);
+    const actions = data?.actions || [];
+    const result = data?.result || {};
+    const totalCards = actions.length;
+
+    // ── Animation states ──────────────────────────────────────────
+    const [cardStates, setCardStates] = useState(() => Array(totalCards).fill('hidden'));
     const [showResult, setShowResult] = useState(false);
     const [bgFlash, setBgFlash] = useState(null);
-    const [drumroll, setDrumroll] = useState(true); // Initial suspense text
-    const timeoutsRef = useRef([]);
+    const [drumroll, setDrumroll] = useState(true);
 
-    // Clean up timeouts on unmount
+    // ── Single mount-only effect — drives the entire animation ────
     useEffect(() => {
-        return () => {
-            timeoutsRef.current.forEach(clearTimeout);
-            timeoutsRef.current = [];
-        };
-    }, []);
+        if (totalCards === 0) return;
 
-    // Main animation effect — depends on questResult so it fires when data arrives
-    useEffect(() => {
-        if (!questResult?.actions?.length) return;
-
-        const actions = questResult.actions;
-        const totalCards = actions.length;
-
-        // Clear any previous animation
-        timeoutsRef.current.forEach(clearTimeout);
-        timeoutsRef.current = [];
-
-        // Reset all animation state
-        setCardStates(Array(totalCards).fill('hidden'));
-        setShowResult(false);
-        setBgFlash(null);
-        setDrumroll(true);
-
+        const timeouts = [];
         const schedule = (fn, delay) => {
-            const id = setTimeout(fn, delay);
-            timeoutsRef.current.push(id);
+            timeouts.push(setTimeout(fn, delay));
         };
 
-        // Dismiss drumroll text before first card
-        schedule(() => setDrumroll(false), INITIAL_PAUSE - 200);
+        // Dismiss drumroll just before first card
+        schedule(() => setDrumroll(false), Math.max(INITIAL_PAUSE - 200, 100));
 
         actions.forEach((action, i) => {
-            const t = getCardStartTime(i);
+            const t = INITIAL_PAUSE + i * PER_CARD;
 
             // 1. Card flies up from bottom to center
             schedule(() => {
-                setCardStates(prev => {
-                    const next = [...prev];
-                    next[i] = 'flying';
-                    return next;
-                });
+                setCardStates(prev => { const n = [...prev]; n[i] = 'flying'; return n; });
             }, t);
 
             // 2. Card starts its 3D flip
             schedule(() => {
-                setCardStates(prev => {
-                    const next = [...prev];
-                    next[i] = 'flipping';
-                    return next;
-                });
+                setCardStates(prev => { const n = [...prev]; n[i] = 'flipping'; return n; });
             }, t + FLY_UP_DURATION + FLIP_DELAY);
 
             // 3. Card is fully revealed — hold in center + screen flash
             schedule(() => {
-                setCardStates(prev => {
-                    const next = [...prev];
-                    next[i] = 'revealed';
-                    return next;
-                });
-                // Explosive screen flash
+                setCardStates(prev => { const n = [...prev]; n[i] = 'revealed'; return n; });
                 setBgFlash(action);
                 schedule(() => setBgFlash(null), 500);
             }, t + FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION);
 
             // 4. Card settles into the tray
             schedule(() => {
-                setCardStates(prev => {
-                    const next = [...prev];
-                    next[i] = 'settling';
-                    return next;
-                });
+                setCardStates(prev => { const n = [...prev]; n[i] = 'settling'; return n; });
             }, t + FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL);
 
             // 5. Mark as fully settled
             schedule(() => {
-                setCardStates(prev => {
-                    const next = [...prev];
-                    next[i] = 'settled';
-                    return next;
-                });
+                setCardStates(prev => { const n = [...prev]; n[i] = 'settled'; return n; });
             }, t + FLY_UP_DURATION + FLIP_DELAY + FLIP_DURATION + HOLD_REVEAL + SETTLE_DURATION);
         });
 
-        // 6. Show the big dramatic result
-        schedule(() => {
-            setShowResult(true);
-        }, getTotalAnimationTime(totalCards));
+        // 6. Show the big dramatic result banner
+        schedule(() => setShowResult(true), INITIAL_PAUSE + totalCards * PER_CARD + RESULT_PAUSE);
 
-    }, [questResult]);
+        return () => timeouts.forEach(clearTimeout);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Mount-only: data is frozen via useState initializer above
 
-    // ─── Render ──────────────────────────────────────────────────────
-    if (!questResult?.actions?.length) {
-        // Waiting for data — show a suspenseful loading state instead of null
+    // ── Render ────────────────────────────────────────────────────
+    if (totalCards === 0) {
         return (
             <div className="quest-reveal-container">
                 <div className="app-background" />
@@ -137,11 +100,7 @@ export default function QuestReveal() {
         );
     }
 
-    const { actions, result } = questResult;
-    const { passed, requiresTwoFails, failCount, successCount } = result || {};
-
-    // Determine which card is currently "active" (flying/flipping/revealed)
-    const activeIndex = cardStates.findIndex(s => s === 'flying' || s === 'flipping' || s === 'revealed');
+    const { passed, requiresTwoFails, failCount, successCount } = result;
 
     return (
         <div className={`quest-reveal-container ${bgFlash ? `flash-${bgFlash}` : ''}`}>
@@ -161,7 +120,7 @@ export default function QuestReveal() {
                     {/* Card counter */}
                     {!drumroll && (
                         <div className="reveal-card-counter animate-fade-in">
-                            <span>Card {Math.min(cardStates.filter(s => s !== 'hidden').length, actions.length)} of {actions.length}</span>
+                            <span>Card {Math.min(cardStates.filter(s => s !== 'hidden').length, totalCards)} of {totalCards}</span>
                         </div>
                     )}
 
