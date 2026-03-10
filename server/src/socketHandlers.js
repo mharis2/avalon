@@ -8,11 +8,8 @@ function generateId() {
 // ─── Auto-advance helpers ────────────────────────────────────────────
 const VOTE_RESULT_DELAY = 4000;   // Show vote result for 4 seconds
 
-// Quest reveal timing — matches client QuestReveal.jsx step-based approach
-// Steps: 4 countdown (3,2,1,GO) + 2 per card (facedown,flip) + result view
-// Each step = 1000ms
-const QR_STEP_MS = 1000;
-const QR_COUNTDOWN_STEPS = 4;
+// Quest reveal timing — matches client QuestReveal.jsx
+// 2 steps per card (1s each: facedown + flip) + 3.5s result viewing
 const QR_RESULT_VIEW_MS = 3500;
 
 function resolveVotesAndBroadcast(io, room) {
@@ -53,18 +50,16 @@ function resolveVotesAndBroadcast(io, room) {
 function resolveQuestAndBroadcast(io, room) {
     const questResult = room.resolveQuest();
 
-    // Broadcast the phase change to QUEST_REVEAL along with the quest actions/result
-    io.to(room.code).emit('phase-change', {
-        phase: room.phase,
-        questResultData: questResult,
+    // Emit dedicated quest-result event (mirrors vote-result pattern)
+    io.to(room.code).emit('quest-result', {
+        actions: questResult.actions,
+        result: questResult.result,
         state: room.getPublicState(),
     });
 
-    // Simple timing: countdown(4 steps) + cards(2 steps each) + result view
-    // Each step = 1s, then hold result for 3.5s
+    // Auto-advance after animation: 2s per card + 3.5s result viewing
     const teamSize = questResult.actions.length;
-    const totalSteps = QR_COUNTDOWN_STEPS + teamSize * 2;
-    const animationDuration = totalSteps * QR_STEP_MS + QR_RESULT_VIEW_MS;
+    const animationDuration = (teamSize * 2 * 1000) + QR_RESULT_VIEW_MS;
 
     setTimeout(() => {
         const { result, nextPhase } = questResult;
@@ -341,17 +336,9 @@ function setupSocketHandlers(io, roomManager) {
                     });
                 }
 
-                // All actions in → resolve
+                // All actions in → resolve immediately (no delay)
                 if (room.allQuestActionsIn()) {
-                    // Update client UI to "All cards gathered" by sending state update
-                    io.to(room.code).emit('quest-action-submitted', {
-                        submittedCount: Object.keys(room.questActions).length,
-                        totalTeamSize: room.proposedTeam.length,
-                    });
-
-                    setTimeout(() => {
-                        resolveQuestAndBroadcast(io, room, roomManager);
-                    }, 2000); // 2-second transition phase
+                    resolveQuestAndBroadcast(io, room);
                 }
 
                 callback?.({ success: true });

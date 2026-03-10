@@ -5,10 +5,11 @@
  *   create room → join → start → role reveal → ready →
  *   propose team → vote → quest action → QUEST REVEAL → next phase
  *
- * Validates that the server correctly:
- *   1. Enters QUEST_REVEAL phase with questResultData
- *   2. Waits the proper animation duration
- *   3. Advances to the next phase (TEAM_PROPOSAL, ASSASSINATION, or GAME_OVER)
+ * Validates:
+ *   1. ALL bots receive the dedicated 'quest-result' event
+ *   2. Event data has correct structure (actions, result, state)
+ *   3. Server auto-advances to next phase after animation duration
+ *   4. Timing matches formula: teamSize * 2000 + 3500
  *
  * Usage:
  *   1. Start the server: cd server && npm start
@@ -19,7 +20,7 @@ const { io } = require('socket.io-client');
 
 const SERVER = 'http://localhost:3001';
 const NUM_BOTS = 5;
-const TIMEOUT_MS = 60000; // Overall test timeout
+const TIMEOUT_MS = 60000;
 
 let roomCode = null;
 const bots = [];
@@ -53,12 +54,11 @@ function emitAsync(socket, event, data) {
     });
 }
 
-// ─── Wait for a specific socket event ────────────────────────────
 function waitForEvent(socket, event, timeoutMs = 30000) {
     return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
             socket.off(event, handler);
-            reject(new Error(`Timeout waiting for ${event}`));
+            reject(new Error(`Timeout waiting for '${event}' (${timeoutMs}ms)`));
         }, timeoutMs);
         const handler = (data) => {
             clearTimeout(timer);
@@ -69,7 +69,6 @@ function waitForEvent(socket, event, timeoutMs = 30000) {
     });
 }
 
-// Wait for event on ALL bots
 function waitForEventAll(event, timeoutMs = 30000) {
     return Promise.all(bots.map(b => waitForEvent(b, event, timeoutMs)));
 }
@@ -110,30 +109,28 @@ async function runTest() {
 
         // 4. Start game
         log('Starting game...');
-        const countdownPromises = bots.map(b => waitForEvent(b, 'game-countdown'));
+        const countdownPromises = waitForEventAll('game-countdown');
         await emitAsync(bots[0], 'start-game', {});
-        await Promise.all(countdownPromises);
+        await countdownPromises;
         pass('Game countdown started');
 
         // 5. Wait for role-reveal
         log('Waiting for role reveal...');
-        const roleReveals = await Promise.all(
-            bots.map(b => waitForEvent(b, 'role-reveal', 10000))
-        );
+        const roleReveals = await waitForEventAll('role-reveal', 10000);
         roleReveals.forEach((r, i) => {
             botData[i].roleInfo = r.roleInfo;
         });
-        pass(`Roles assigned: ${botData.map(b => `${b.name}=${b.roleInfo.roleName}`).join(', ')}`);
+        pass(`Roles: ${botData.map(b => `${b.name}=${b.roleInfo.roleName}(${b.roleInfo.team})`).join(', ')}`);
 
         // 6. All players ready
         log('All players sending ready...');
-        const phaseChangePromises = bots.map(b => waitForEvent(b, 'phase-change'));
+        const phaseChangePromises = waitForEventAll('phase-change');
         for (const bot of bots) {
             await emitAsync(bot, 'player-ready', {});
         }
-        const phaseResults = await Promise.all(phaseChangePromises);
-        if (phaseResults[0].phase !== 'TEAM_PROPOSAL') {
-            fail(`Expected TEAM_PROPOSAL, got ${phaseResults[0].phase}`);
+        const phaseResults = await phaseChangePromises;
+        if (phaseResults[0].state.phase !== 'TEAM_PROPOSAL') {
+            fail(`Expected TEAM_PROPOSAL, got ${phaseResults[0].state.phase}`);
         }
         pass('Phase: TEAM_PROPOSAL');
 
@@ -144,110 +141,147 @@ async function runTest() {
         const teamSize = state.currentQuestTeamSize;
         const team = state.players.slice(0, teamSize).map(p => p.id);
 
-        log(`Leader: ${leaderBot.name}, proposing team of ${teamSize}: [${team.join(', ')}]`);
-        const teamProposedPromises = bots.map(b => waitForEvent(b, 'team-proposed'));
+        log(`Leader: ${leaderBot.name}, proposing team of ${teamSize}: [${team.map(id => botData.find(b => b.playerId === id)?.name).join(', ')}]`);
+        const teamProposedPromises = waitForEventAll('team-proposed');
         await emitAsync(leaderBot.socket, 'propose-team', { team });
-        await Promise.all(teamProposedPromises);
+        await teamProposedPromises;
         pass('Team proposed → VOTING phase');
 
         // 8. All non-leader bots vote approve
-        log('All bots voting approve...');
-        const voteResultPromises = bots.map(b => waitForEvent(b, 'vote-result'));
+        log('All non-leader bots voting approve...');
+        const voteResultPromises = waitForEventAll('vote-result');
         for (const bd of botData) {
             if (bd.playerId !== leaderId) {
                 await emitAsync(bd.socket, 'submit-vote', { vote: 'approve' });
             }
         }
-        const voteResults = await Promise.all(voteResultPromises);
+        const voteResults = await voteResultPromises;
         if (!voteResults[0].approved) {
             fail('Vote should have been approved');
         }
-        pass(`Vote result: approved=${voteResults[0].approved}`);
+        pass(`Vote: approved=${voteResults[0].approved}, approvals=${voteResults[0].approvals}, rejections=${voteResults[0].rejections}`);
 
         // 9. Wait for phase change to QUEST
         log('Waiting for phase change to QUEST...');
-        const questPhasePromises = bots.map(b => waitForEvent(b, 'phase-change'));
-        const questPhases = await Promise.all(questPhasePromises);
-        if (questPhases[0].phase !== 'QUEST') {
-            fail(`Expected QUEST phase, got ${questPhases[0].phase}`);
+        const questPhaseResults = await waitForEventAll('phase-change');
+        if (questPhaseResults[0].state.phase !== 'QUEST') {
+            fail(`Expected QUEST phase, got ${questPhaseResults[0].state.phase}`);
         }
         pass('Phase: QUEST');
 
-        // 10. Team members submit quest actions
-        log('Team members submitting quest actions...');
-        const questRevealPromises = bots.map(b => waitForEvent(b, 'phase-change', 15000));
+        // ═══════════════════════════════════════════════════════════════
+        // 10. CRITICAL: Set up quest-result listeners BEFORE submitting
+        // ═══════════════════════════════════════════════════════════════
+        log('Setting up quest-result listeners on ALL bots...');
+        const questResultPromises = waitForEventAll('quest-result', 15000);
 
+        // 11. Team members submit quest actions
+        log('Team members submitting quest actions...');
         for (const bd of botData) {
             if (team.includes(bd.playerId)) {
                 const isEvil = bd.roleInfo.team === 'evil';
-                const action = isEvil ? 'fail' : 'success'; // Evil bots play fail
-                log(`  ${bd.name} (${bd.roleInfo.roleName}) plays: ${action}`);
+                const action = isEvil ? 'fail' : 'success';
+                log(`  ${bd.name} (${bd.roleInfo.roleName}/${bd.roleInfo.team}) plays: ${action}`);
                 await emitAsync(bd.socket, 'submit-quest-action', { action });
             }
         }
 
-        // 11. Wait for QUEST_REVEAL phase
-        const revealPhases = await Promise.all(questRevealPromises);
-        const revealData = revealPhases[0];
+        // ═══════════════════════════════════════════════════════════════
+        // 12. VERIFY: ALL bots receive 'quest-result' event
+        // ═══════════════════════════════════════════════════════════════
+        log('Waiting for quest-result on all bots...');
+        const questResults = await questResultPromises;
+        pass(`All ${NUM_BOTS} bots received 'quest-result' event`);
 
-        if (revealData.phase !== 'QUEST_REVEAL') {
-            fail(`Expected QUEST_REVEAL, got ${revealData.phase}`);
+        // 13. Validate data structure on EVERY bot's event
+        let errors = 0;
+        for (let i = 0; i < NUM_BOTS; i++) {
+            const qr = questResults[i];
+            const name = botData[i].name;
+
+            if (!qr) { log(`  ${name}: received null/undefined`); errors++; continue; }
+            if (!Array.isArray(qr.actions)) { log(`  ${name}: missing actions array`); errors++; }
+            if (!qr.result) { log(`  ${name}: missing result object`); errors++; }
+            if (typeof qr.result?.passed !== 'boolean') { log(`  ${name}: result.passed not boolean`); errors++; }
+            if (typeof qr.result?.failCount !== 'number') { log(`  ${name}: result.failCount not number`); errors++; }
+            if (typeof qr.result?.successCount !== 'number') { log(`  ${name}: result.successCount not number`); errors++; }
+            if (!qr.state) { log(`  ${name}: missing state object`); errors++; }
+            if (qr.state?.phase !== 'QUEST_REVEAL') { log(`  ${name}: state.phase should be QUEST_REVEAL, got ${qr.state?.phase}`); errors++; }
         }
-        if (!revealData.questResultData) {
-            fail('Missing questResultData in phase-change');
+        if (errors > 0) fail(`${errors} data structure error(s) in quest-result events`);
+
+        const qr = questResults[0];
+        pass(`Quest data valid — actions: [${qr.actions.join(', ')}], passed: ${qr.result.passed}, fails: ${qr.result.failCount}, successes: ${qr.result.successCount}`);
+
+        // 14. Check actions match team size
+        if (qr.actions.length !== teamSize) {
+            fail(`Expected ${teamSize} actions, got ${qr.actions.length}`);
         }
+        pass(`Actions count matches team size (${teamSize})`);
 
-        const qr = revealData.questResultData;
-        pass(`Phase: QUEST_REVEAL — cards: [${qr.actions.join(', ')}], passed: ${qr.result.passed}, fails: ${qr.result.failCount}, successes: ${qr.result.successCount}`);
-
-        // 12. Verify animation timing — server should auto-advance after animation
-        // Simple timing: countdown(4 steps × 1s) + cards(2 steps × 1s each) + result(3.5s)
-        const expectedDuration = (4 + qr.actions.length * 2) * 1000 + 3500;
-        log(`Waiting for server auto-advance (expected ~${expectedDuration}ms)...`);
-        const startTime = Date.now();
-        const nextPhasePromises = bots.map(b => waitForEvent(b, 'phase-change', expectedDuration + 5000));
-
-        let nextPhaseResults;
-        try {
-            nextPhaseResults = await Promise.all(nextPhasePromises);
-        } catch (err) {
-            // Could be game-over instead of phase-change
-            log('Checking for game-over event...');
-            const gameOverPromises = bots.map(b => waitForEvent(b, 'game-over', 5000));
-            try {
-                const gameOverResults = await Promise.all(gameOverPromises);
-                pass(`Game Over — winner: ${gameOverResults[0].winner}, reason: ${gameOverResults[0].winReason}`);
-                clearTimeout(overallTimer);
-                cleanup();
-                console.log('\n  🎉 TEST PASSED — Full quest reveal flow completed successfully!\n');
-                process.exit(0);
-            } catch {
-                fail(`Neither phase-change nor game-over received after quest reveal: ${err.message}`);
+        // 15. Verify each action is 'success' or 'fail'
+        for (const a of qr.actions) {
+            if (a !== 'success' && a !== 'fail') {
+                fail(`Invalid action value: "${a}"`);
             }
+        }
+        pass('All action values valid (success/fail)');
+
+        // ═══════════════════════════════════════════════════════════════
+        // 16. Wait for auto-advance (phase-change OR game-over)
+        // ═══════════════════════════════════════════════════════════════
+        const expectedDuration = teamSize * 2000 + 3500;
+        log(`Waiting for auto-advance (~${expectedDuration}ms)...`);
+
+        // Listen for both phase-change and game-over on all bots
+        const phasePromises = waitForEventAll('phase-change', expectedDuration + 5000);
+        const gameOverPromises = waitForEventAll('game-over', expectedDuration + 5000);
+
+        const startTime = Date.now();
+
+        let nextEvent;
+        try {
+            nextEvent = await Promise.race([
+                phasePromises.then(r => ({ type: 'phase-change', data: r })),
+                gameOverPromises.then(r => ({ type: 'game-over', data: r })),
+            ]);
+        } catch (err) {
+            fail(`Neither phase-change nor game-over received: ${err.message}`);
         }
 
         const elapsed = Date.now() - startTime;
-        const nextPhase = nextPhaseResults[0].phase || nextPhaseResults[0].state?.phase;
-        pass(`Server auto-advanced after ${elapsed}ms to phase: ${nextPhase}`);
+        pass(`Server auto-advanced via '${nextEvent.type}' after ${elapsed}ms`);
 
-        // Verify timing is reasonable (within 2 seconds of expected)
-        if (Math.abs(elapsed - expectedDuration) > 2000) {
-            log(`⚠ Timing variance: expected ~${expectedDuration}ms, got ${elapsed}ms`);
+        // Verify timing accuracy
+        const timingDiff = Math.abs(elapsed - expectedDuration);
+        if (timingDiff > 2000) {
+            log(`  ⚠ Timing off by ${timingDiff}ms (expected ~${expectedDuration}ms, got ${elapsed}ms)`);
         } else {
-            pass(`Timing accurate: expected ~${expectedDuration}ms, got ${elapsed}ms`);
+            pass(`Timing accurate: expected ~${expectedDuration}ms, got ${elapsed}ms (diff: ${timingDiff}ms)`);
         }
 
-        // Verify next phase is valid
-        const validNextPhases = ['TEAM_PROPOSAL', 'ASSASSINATION', 'GAME_OVER'];
-        if (!validNextPhases.includes(nextPhase)) {
-            fail(`Unexpected next phase: ${nextPhase}`);
+        if (nextEvent.type === 'phase-change') {
+            const nextPhase = nextEvent.data[0].state?.phase || nextEvent.data[0].phase;
+            const validPhases = ['TEAM_PROPOSAL', 'ASSASSINATION', 'GAME_OVER'];
+            if (!validPhases.includes(nextPhase)) {
+                fail(`Unexpected next phase: ${nextPhase}`);
+            }
+            pass(`Next phase: ${nextPhase}`);
+        } else {
+            pass(`Game over — winner: ${nextEvent.data[0].winner}`);
         }
-        pass(`Next phase is valid: ${nextPhase}`);
 
-        // ── Success! ──
+        // ══════════════════════════════════════════════════════════════
+        // Summary
+        // ══════════════════════════════════════════════════════════════
         clearTimeout(overallTimer);
         cleanup();
-        console.log('\n  🎉 TEST PASSED — Full quest reveal flow completed successfully!\n');
+        console.log('\n  🎉 TEST PASSED — Quest reveal flow works correctly!\n');
+        console.log('  Summary:');
+        console.log(`    - All ${NUM_BOTS} bots received 'quest-result' event`);
+        console.log(`    - Data structure validated (actions, result, state)`);
+        console.log(`    - Server auto-advanced after ${elapsed}ms (expected ~${expectedDuration}ms)`);
+        console.log(`    - Quest ${qr.result.passed ? 'PASSED' : 'FAILED'}: ${qr.result.successCount}S / ${qr.result.failCount}F\n`);
         process.exit(0);
 
     } catch (err) {
