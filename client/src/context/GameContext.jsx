@@ -28,7 +28,7 @@ const initialState = {
     // UI state
     votes: null,
     voteResult: null,
-    questResult: null,
+    currentQuestReveal: null,
     assassinationResult: null,
     fullReveal: null,
     readyCount: 0,
@@ -62,6 +62,7 @@ function reducer(state, action) {
                 questResults: action.payload.questResults || state.questResults,
                 questTeamSizes: action.payload.questTeamSizes || state.questTeamSizes,
                 proposedTeam: action.payload.proposedTeam || state.proposedTeam,
+                currentQuestReveal: action.payload.currentQuestReveal ?? state.currentQuestReveal,
                 voteHistory: action.payload.voteHistory || state.voteHistory,
                 winner: action.payload.winner ?? state.winner,
                 winReason: action.payload.winReason ?? state.winReason,
@@ -74,11 +75,6 @@ function reducer(state, action) {
             return { ...state, votes: action.payload };
         case 'SET_VOTE_RESULT':
             return { ...state, voteResult: action.payload, showingResult: 'vote' };
-        case 'SET_QUEST_RESULT':
-            if (action.payload) {
-                return { ...state, questResult: action.payload, showingResult: 'quest' };
-            }
-            return { ...state, questResult: null };
         case 'SET_ASSASSINATION_RESULT':
             return { ...state, assassinationResult: action.payload };
         case 'SET_FULL_REVEAL':
@@ -194,20 +190,12 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_READY_COUNT', payload: readyCount });
         });
 
-        socket.on('phase-change', ({ state: s, questResultData }) => {
-            // Only clear showing-result when this is NOT the quest-reveal transition.
-            // Quest reveal sets its own showingResult atomically via SET_QUEST_RESULT.
-            if (!questResultData) {
-                dispatch({ type: 'CLEAR_SHOWING_RESULT' });
-            }
+        socket.on('phase-change', ({ state: s }) => {
+            console.log('[PHASE-CHANGE]', s.phase, { showingResultWas: stateRef.current.showingResult });
+            dispatch({ type: 'CLEAR_SHOWING_RESULT' });
             dispatch({ type: 'UPDATE_STATE', payload: s });
             dispatch({ type: 'SET_VOTED_COUNT', payload: 0 });
             dispatch({ type: 'SET_QUEST_SUBMITTED_COUNT', payload: 0 });
-            if (questResultData) {
-                dispatch({ type: 'SET_QUEST_RESULT', payload: questResultData });
-            } else if (s.phase !== 'QUEST_REVEAL') {
-                dispatch({ type: 'SET_QUEST_RESULT', payload: null });
-            }
         });
 
         socket.on('team-proposed', ({ state: s }) => {
@@ -247,7 +235,6 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_FULL_REVEAL', payload: null });
             dispatch({ type: 'SET_VOTES', payload: null });
             dispatch({ type: 'SET_VOTE_RESULT', payload: null });
-            dispatch({ type: 'SET_QUEST_RESULT', payload: null });
             dispatch({ type: 'SET_ASSASSINATION_RESULT', payload: null });
             dispatch({ type: 'CLEAR_SHOWING_RESULT' });
         });

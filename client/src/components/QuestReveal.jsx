@@ -1,174 +1,167 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGame } from '../context/GameContext';
 import './QuestReveal.css';
 
-/**
- * QuestReveal — CSS-driven cinematic card reveal overlay.
+/*
+ * QuestReveal — Full-screen overlay showing quest card results.
  *
- * Architecture (completely different from the old approach):
- *   - ALL visual animation is driven by CSS @keyframes + animation-delay
- *   - Cards are rendered once at mount; CSS auto-staggers them via --i custom property
- *   - React manages only 3 lightweight states: phase, revealedCount, flash
- *   - No per-card state arrays, no 5-state-per-card timeout chains
- *   - JS timeouts only track metadata (counter/tally), NOT visual animation
- *   - This makes animation immune to React re-render timing issues
+ * Triggered by the dedicated 'quest-result' socket event (mirrors 'vote-result').
+ * GameBoard renders this when showingResult === 'quest' && questResult.
  *
- * Timing constants MUST match the CSS animation durations/delays below.
+ * Flow: cards appear one by one (facedown → flip), then result banner.
+ * No countdown, no delays — starts immediately on mount.
+ *
+ * Step timeline (each step = 1 second):
+ *   step 0: card 0 slides up facedown
+ *   step 1: card 0 flips to reveal
+ *   step 2: card 1 slides up facedown
+ *   step 3: card 1 flips to reveal
+ *   ...
+ *   step total*2: result banner appears
+ *
+ * Server auto-advances everyone after total*2*1000 + 3500ms.
  */
 
-// ─── Timing (ms) ────────────────────────────────────────────────────
-const INTRO_MS    = 1800;   // Suspenseful intro duration
-const PER_CARD_MS = 3200;   // Full card cycle: fly(700) + pause(300) + flip(800) + hold(900) + exit(500)
-const FLIP_DONE   = 1800;   // Within-card offset when flip completes (700+300+800)
-const CARD_EXIT   = 2800;   // Within-card offset when card exits → tray fills
-const RESULT_WAIT = 1200;   // Pause after last card before result banner
-
 export default function QuestReveal() {
-    const { questResult } = useGame();
+    const { currentQuestReveal } = useGame();
 
-    // ── Freeze data at mount — immune to context updates ────────
-    const [data] = useState(() => questResult);
+    // Freeze data at mount so context updates don't interfere
+    const [data] = useState(() => currentQuestReveal);
     const actions = data?.actions || [];
-    const result  = data?.result  || {};
-    const total   = actions.length;
+    const result = data?.result || {};
 
-    // ── Minimal state: phase + counter + screen flash ───────────
-    const [phase, setPhase]            = useState('intro');
-    const [revealedCount, setRevealed] = useState(0);
-    const [flash, setFlash]            = useState('');
+    console.log('[QUEST-REVEAL] Mounted!', {
+        hasData: !!data,
+        actionsCount: actions.length,
+        passed: result.passed,
+    });
+    const total = actions.length;
 
-    // ── Pre-compute running success/fail totals ─────────────────
-    const runningTotals = useMemo(() => {
-        let s = 0, f = 0;
-        return actions.map(a => {
-            if (a === 'success') s++; else f++;
-            return { s, f };
-        });
-    }, [actions]);
+    const RESULT_STEP = total * 2;
+    const [step, setStep] = useState(0);
 
-    // ── Effect 1: Intro → Cards transition ──────────────────────
+    // Drive the animation with a simple 1-second interval
     useEffect(() => {
-        if (!total) return;
-        const t = setTimeout(() => setPhase('cards'), INTRO_MS);
-        return () => clearTimeout(t);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        if (total === 0) return;
 
-    // ── Effect 2: Cards phase — sync JS metadata with CSS ───────
-    //    Starts when 'cards' phase mounts, so JS timers and CSS
-    //    animation-delay both measure from the same origin point.
-    useEffect(() => {
-        if (phase !== 'cards' || !total) return;
-        const timers = [];
-        const sched = (fn, ms) => timers.push(setTimeout(fn, ms));
+        const id = setInterval(() => {
+            setStep(prev => {
+                const next = prev + 1;
+                if (next > RESULT_STEP) {
+                    clearInterval(id);
+                    return RESULT_STEP;
+                }
+                return next;
+            });
+        }, 1000);
 
-        actions.forEach((action, i) => {
-            const base = i * PER_CARD_MS;
-            // Screen flash when flip completes
-            sched(() => setFlash(action),    base + FLIP_DONE);
-            sched(() => setFlash(''),        base + FLIP_DONE + 600);
-            // Tray fills when card exits
-            sched(() => setRevealed(i + 1),  base + CARD_EXIT);
-        });
+        return () => clearInterval(id);
+    }, [total, RESULT_STEP]);
 
-        // Transition to result banner
-        sched(() => setPhase('result'), total * PER_CARD_MS + RESULT_WAIT);
-
-        return () => timers.forEach(clearTimeout);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [phase]);
-
-    // ── Empty / loading state ───────────────────────────────────
-    if (!total) {
+    // Loading state (should rarely be seen since data is frozen at mount)
+    if (total === 0) {
         return (
             <div className="qr-overlay">
                 <div className="qr-bg" />
-                <p className="qr-loading animate-pulse">Gathering quest cards…</p>
+                <p className="qr-loading">Loading quest results…</p>
             </div>
         );
     }
 
     const { passed, failCount, successCount, requiresTwoFails } = result;
-    const totals = revealedCount > 0 ? runningTotals[revealedCount - 1] : null;
+    const isResult = step >= RESULT_STEP;
 
-    const overlayClass = [
-        'qr-overlay',
-        flash && `qr-flash-${flash}`,
-        phase === 'result' && (passed ? 'qr-bg-pass' : 'qr-bg-fail'),
-    ].filter(Boolean).join(' ');
+    // Card state helper
+    const cardState = (i) => {
+        const facedownAt = i * 2;
+        const flipAt = i * 2 + 1;
+        if (step < facedownAt) return 'hidden';
+        if (step === facedownAt) return 'facedown';
+        if (step === flipAt) return 'flipped';
+        return 'done'; // moved to tray
+    };
+
+    // Running tally of revealed cards
+    let successSoFar = 0, failSoFar = 0;
+    for (let i = 0; i < total; i++) {
+        if (step >= i * 2 + 1) {
+            if (actions[i] === 'success') successSoFar++;
+            else failSoFar++;
+        }
+    }
+
+    // Screen shake when a fail card is revealed
+    const justFlippedIdx = step % 2 === 1 ? Math.floor(step / 2) : -1;
+    const shaking = justFlippedIdx >= 0 && justFlippedIdx < total && actions[justFlippedIdx] === 'fail';
 
     return (
-        <div className={overlayClass}>
+        <div className={`qr-overlay ${shaking ? 'qr-shake' : ''} ${isResult ? (passed ? 'qr-glow-pass' : 'qr-glow-fail') : ''}`}>
             <div className="qr-bg" />
 
-            {/* ═══ INTRO ═══════════════════════════════════════════════ */}
-            {phase === 'intro' && (
-                <div className="qr-intro">
-                    <h2 className="qr-intro-title heading-display">⚔ The Quest Cards Are In</h2>
-                    <p className="qr-intro-sub animate-pulse">Preparing to reveal…</p>
-                </div>
-            )}
-
-            {/* ═══ CARDS (CSS-animated) ═════════════════════════════════ */}
-            {phase === 'cards' && (
-                <>
-                    {/* HUD: card counter + running tally */}
-                    <div className="qr-hud">
-                        <div className="qr-counter">
-                            Card {Math.min(revealedCount + (revealedCount < total ? 1 : 0), total)} of {total}
+            {/* ── Cards Phase ── */}
+            {!isResult && (
+                <div className="qr-cards-area">
+                    {/* Running tally */}
+                    {(successSoFar + failSoFar > 0) && (
+                        <div className="qr-tally">
+                            <span className="qr-tally-s">✓ {successSoFar}</span>
+                            <span className="qr-tally-sep">|</span>
+                            <span className="qr-tally-f">✗ {failSoFar}</span>
                         </div>
-                        {totals && (
-                            <div className="qr-tally" key={revealedCount}>
-                                <span className="qr-tally-s">✓ {totals.s} Success</span>
-                                <span className="qr-tally-f">✗ {totals.f} Fail</span>
-                            </div>
-                        )}
-                    </div>
+                    )}
 
-                    {/* Cards — ALL rendered at once; CSS staggers via --i */}
-                    {actions.map((action, i) => (
-                        <div key={i} className="qr-card" style={{ '--i': i }}>
-                            <div className="qr-flipper">
-                                <div className="qr-face qr-front">
-                                    <span className="qr-front-symbol">?</span>
-                                </div>
-                                <div className={`qr-face qr-back qr-back-${action}`}>
-                                    <span className="qr-back-icon">{action === 'success' ? '✓' : '✗'}</span>
-                                    <span className="qr-back-text">{action === 'success' ? 'SUCCESS' : 'FAIL'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                    {/* Active center card */}
+                    {actions.map((action, i) => {
+                        const cs = cardState(i);
+                        if (cs === 'hidden' || cs === 'done') return null;
 
-                    {/* Settled-cards tray */}
-                    <div className="qr-tray">
-                        {actions.map((action, i) => (
-                            <div key={i} className={`qr-tray-slot ${i < revealedCount ? 'filled' : ''}`}>
-                                {i < revealedCount && (
-                                    <div className={`qr-mini qr-mini-${action}`}>
-                                        {action === 'success' ? '✓' : '✗'}
+                        return (
+                            <div key={i} className={`qr-card qr-card-${cs}`}>
+                                {cs === 'facedown' && (
+                                    <div className="qr-face qr-front">?</div>
+                                )}
+                                {cs === 'flipped' && (
+                                    <div className={`qr-face qr-back qr-back-${action}`}>
+                                        <span className="qr-back-icon">{action === 'success' ? '✓' : '✗'}</span>
+                                        <span className="qr-back-label">{action === 'success' ? 'SUCCESS' : 'FAIL'}</span>
                                     </div>
                                 )}
                             </div>
-                        ))}
+                        );
+                    })}
+
+                    {/* Bottom tray: settled cards */}
+                    <div className="qr-tray">
+                        {actions.map((action, i) => {
+                            const inTray = cardState(i) === 'done';
+                            return (
+                                <div key={i} className={`qr-slot ${inTray ? 'qr-slot-filled' : ''}`}>
+                                    {inTray && (
+                                        <div className={`qr-mini qr-mini-${action}`}>
+                                            {action === 'success' ? '✓' : '✗'}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
-                </>
+                </div>
             )}
 
-            {/* ═══ RESULT ══════════════════════════════════════════════ */}
-            {phase === 'result' && (
-                <div className={`qr-result ${passed ? 'qr-pass' : 'qr-fail'}`}>
-                    <h1 className="qr-result-title heading-display">
+            {/* ── Result Banner ── */}
+            {isResult && (
+                <div className={`qr-result ${passed ? 'qr-result-pass' : 'qr-result-fail'}`}>
+                    <h1 className="qr-result-title">
                         {passed ? '🏰 Quest Succeeded!' : '🔥 Quest Failed!'}
                     </h1>
                     <div className="qr-result-counts">
-                        <div className="qr-count-group">
+                        <div className="qr-count-box">
                             <span className="qr-count-num">{successCount}</span>
-                            <span className="qr-count-lbl qr-s-clr">✓ Success</span>
+                            <span className="qr-count-label qr-clr-s">✓ Success</span>
                         </div>
-                        <div className="qr-count-group">
+                        <div className="qr-count-box">
                             <span className="qr-count-num">{failCount}</span>
-                            <span className="qr-count-lbl qr-f-clr">✗ Fail</span>
+                            <span className="qr-count-label qr-clr-f">✗ Fail</span>
                         </div>
                     </div>
                     {requiresTwoFails && (

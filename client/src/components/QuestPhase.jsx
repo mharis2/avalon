@@ -38,20 +38,17 @@ export default function QuestPhase() {
                         ))}
                     </div>
                 </div>
-                <p className="gb-action-subtitle animate-pulse">
-                    {questSubmittedCount >= proposedTeam.length ? 'All cards gathered! Preparing to reveal...' : 'Waiting for quest team to play their cards...'}
-                </p>
+                <p className="gb-action-subtitle animate-pulse">Waiting for quest team to play their cards...</p>
                 <p className="quest-count">{questSubmittedCount} / {proposedTeam.length} submitted</p>
             </div>
         );
     }
 
     if (submitted) {
-        const allIn = questSubmittedCount >= proposedTeam.length;
         return (
             <div className="quest-phase animate-fade-in">
-                <h3 className="gb-action-title">{allIn ? 'All Cards Gathered!' : 'Card Played ✓'}</h3>
-                <p className="gb-action-subtitle animate-pulse">{allIn ? 'Preparing to reveal the outcome...' : 'Waiting for team members...'}</p>
+                <h3 className="gb-action-title">Card Played ✓</h3>
+                <p className="gb-action-subtitle animate-pulse">Waiting for team members...</p>
                 <p className="quest-count">{questSubmittedCount} / {proposedTeam.length} submitted</p>
             </div>
         );

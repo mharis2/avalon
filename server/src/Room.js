@@ -36,6 +36,7 @@ class Room {
         this.roleAssignments = {};
         this.currentLeaderIndex = 0;
         this.currentQuestIndex = 0;
+        this.currentQuestReveal = null;
         this.rejectionTrack = 0;
         this.questResults = [];        // Array of { passed, failCount, successCount }
         this.proposedTeam = [];
@@ -315,6 +316,7 @@ class Room {
         }
 
         this.phase = PHASES.QUEST_REVEAL;
+        this.currentQuestReveal = { actions, result: winState };
 
         return {
             actions,
@@ -376,6 +378,7 @@ class Room {
         this.roleAssignments = {};
         this.currentLeaderIndex = 0;
         this.currentQuestIndex = 0;
+        this.currentQuestReveal = null;
         this.rejectionTrack = 0;
         this.questResults = [];
         this.proposedTeam = [];
@@ -407,6 +410,7 @@ class Room {
                 : null,
             currentQuestIndex: this.currentQuestIndex,
             currentQuestTeamSize: this.getCurrentQuestTeamSize(),
+            currentQuestReveal: this.currentQuestReveal,
             rejectionTrack: this.rejectionTrack,
             maxRejections: MAX_REJECTIONS,
             questResults: this.questResults,

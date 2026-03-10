@@ -37,7 +37,7 @@ export default function GameBoard() {
         phase, players, playerId, currentLeader, currentQuestIndex,
         rejectionTrack, maxRejections, questResults, proposedTeam,
         questTeamSizes, roleInfo, isLeader, isHost, proposeTeam, endGame,
-        showingResult, voteResult, questResult,
+        showingResult, voteResult, currentQuestReveal,
         winner, fullReveal, voteHistory, leaveRoom,
     } = useGame();
 
@@ -102,7 +102,9 @@ export default function GameBoard() {
     };
 
     // ─── Auto-advancing Result Overlays (no Continue button) ─────
-    if (showingResult === 'quest' && questResult) {
+    console.log('[GAMEBOARD] Render check:', { showingResult, hasQuestReveal: !!currentQuestReveal, phase });
+    if (phase === 'QUEST_REVEAL' && currentQuestReveal) {
+        console.log('[GAMEBOARD] → Rendering QuestReveal overlay!');
         return <QuestReveal />;
     }
 

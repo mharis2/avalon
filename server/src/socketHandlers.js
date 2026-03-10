@@ -50,10 +50,9 @@ function resolveVotesAndBroadcast(io, room) {
 function resolveQuestAndBroadcast(io, room) {
     const questResult = room.resolveQuest();
 
-    // Emit dedicated quest-result event (mirrors vote-result pattern)
-    io.to(room.code).emit('quest-result', {
-        actions: questResult.actions,
-        result: questResult.result,
+    // The phase is now QUEST_REVEAL. Broadcast this to all clients.
+    io.to(room.code).emit('phase-change', {
+        phase: room.phase,
         state: room.getPublicState(),
     });
 
@@ -81,6 +80,7 @@ function resolveQuestAndBroadcast(io, room) {
                 room.proposedTeam = [];
                 room.votes = {};
                 room.questActions = {};
+                room.currentQuestReveal = null; // Clear the previous reveal
             }
 
             // Auto-advance to assassination or next proposal
