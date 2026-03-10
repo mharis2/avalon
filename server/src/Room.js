@@ -299,9 +299,13 @@ class Room {
             } else if (winCheck.goToAssassination && !this.enabledRoles.merlin) {
                 // No Merlin → Good wins outright
                 nextPhase = PHASES.GAME_OVER;
+                this.winner = TEAM_GOOD;
+                this.winReason = 'three_quests_passed';
                 winState = { ...result, goToAssassination: false, gameOver: true, winner: TEAM_GOOD, winReason: 'three_quests_passed' };
             } else {
                 nextPhase = PHASES.GAME_OVER;
+                this.winner = winCheck.winner;
+                this.winReason = winCheck.reason;
                 winState = { ...result, goToAssassination: false, gameOver: true, winner: winCheck.winner, winReason: winCheck.reason };
             }
         } else {

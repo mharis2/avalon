@@ -54,9 +54,12 @@ function resolveQuestAndBroadcast(io, room) {
         state: room.getPublicState(),
     });
 
-    // Animation: 1.5s per card + 4s for final reveal banner
+    // Animation timing must match the client's QuestReveal component:
+    // Per card: flyUp(700) + flipDelay(300) + flip(800) + hold(1200) + settle(500) + gap(400) = 3900ms
+    // Total: initialPause(800) + (cards * 3900) + resultPause(1200) + resultViewTime(3000)
     const teamSize = questResult.actions.length;
-    const animationDuration = (teamSize * 1500) + 4000;
+    const perCard = 700 + 300 + 800 + 1200 + 500 + 400;
+    const animationDuration = 800 + (teamSize * perCard) + 1200 + 3000;
 
     setTimeout(() => {
         const { result, nextPhase } = questResult;

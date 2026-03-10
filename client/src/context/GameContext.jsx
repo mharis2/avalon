@@ -198,6 +198,9 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_QUEST_SUBMITTED_COUNT', payload: 0 });
             if (questResultData) {
                 dispatch({ type: 'SET_QUEST_RESULT', payload: questResultData });
+            } else if (s.phase !== 'QUEST_REVEAL') {
+                // Clear stale quest result when leaving the reveal phase
+                dispatch({ type: 'SET_QUEST_RESULT', payload: null });
             }
         });
 
@@ -238,6 +241,7 @@ export function GameProvider({ children }) {
             dispatch({ type: 'SET_FULL_REVEAL', payload: null });
             dispatch({ type: 'SET_VOTES', payload: null });
             dispatch({ type: 'SET_VOTE_RESULT', payload: null });
+            dispatch({ type: 'SET_QUEST_RESULT', payload: null });
             dispatch({ type: 'SET_ASSASSINATION_RESULT', payload: null });
             dispatch({ type: 'CLEAR_SHOWING_RESULT' });
         });
