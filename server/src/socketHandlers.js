@@ -56,9 +56,15 @@ function resolveQuestAndBroadcast(io, room) {
         state: room.getPublicState(),
     });
 
-    // Auto-advance after animation: 2s per card + 3.5s result viewing
+    // Auto-advance after animation
+    // Frontend timing table:
+    // For n cards where n > 0:
+    // Cards 0 to n-2: each takes 1.2s (facedown) + 1.5s (flipped) = 2.7s
+    // Card n-1 (final): takes 2.5s (facedown) + 1.5s (flipped) = 4.0s
+    // Total cards duration: (n - 1) * 2.7s + 4.0s
     const teamSize = questResult.actions.length;
-    const animationDuration = (teamSize * 2 * 1000) + QR_RESULT_VIEW_MS;
+    const cardsDuration = teamSize > 0 ? ((teamSize - 1) * 2700 + 4000) : 0;
+    const animationDuration = cardsDuration + QR_RESULT_VIEW_MS;
 
     setTimeout(() => {
         const { result, nextPhase } = questResult;

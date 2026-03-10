@@ -17,8 +17,9 @@
 .qr-bg {
     position: absolute;
     inset: 0;
-    background: rgba(8, 8, 15, 0.97);
-    backdrop-filter: blur(10px);
+    /* Medieval dark tavern vignette */
+    background: radial-gradient(circle at center, rgba(30, 20, 15, 0.9) 0%, rgba(5, 5, 8, 0.98) 100%);
+    backdrop-filter: blur(12px);
     z-index: -1;
 }
 
@@ -89,8 +90,8 @@
 }
 
 @keyframes qrSlideUp {
-    0% { transform: translateY(60vh) scale(0.5); opacity: 0; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
+    0% { transform: translateY(60vh) scale(0.6); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); }
 }
 
 @keyframes qrFlipIn {
@@ -111,39 +112,61 @@
 }
 
 .qr-front {
-    background: linear-gradient(135deg, #1e1e30, #0c0c18);
-    border: 3px solid var(--border-color, #444);
-    color: var(--text-secondary, #999);
+    /* Rustic leather/wood texture look */
+    background: radial-gradient(circle at top left, #4a2c1b, #1a0f08);
+    border: 3px solid #b8860b; /* Metallic gold */
+    color: #ebd3a6; /* Parchment font */
     font-size: 5rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 0, 0, 0.8);
+    position: relative;
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+}
+
+.qr-watermark {
+    position: absolute;
+    font-size: 8rem;
+    opacity: 0.1;
+    color: #ffd700;
 }
 
 .qr-back {
-    border: 4px solid rgba(255, 255, 255, 0.85);
+    border: 4px solid #d4af37; /* Brighter gold for revealed cards */
     color: #fff;
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
 }
 
 .qr-back-success {
-    background: linear-gradient(135deg, rgba(80, 200, 120, 0.95), rgba(30, 100, 50, 0.95));
-    box-shadow: 0 0 40px rgba(80, 200, 120, 0.4), 0 10px 30px rgba(0, 0, 0, 0.5);
+    /* Royal blue */
+    background: linear-gradient(135deg, #0b1d3a, #1a365d);
+    box-shadow: 0 0 40px rgba(26, 115, 232, 0.4), 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .qr-back-fail {
-    background: linear-gradient(135deg, rgba(220, 20, 60, 0.95), rgba(110, 10, 30, 0.95));
-    box-shadow: 0 0 40px rgba(220, 20, 60, 0.4), 0 10px 30px rgba(0, 0, 0, 0.5);
+    /* Blood red / charcoal */
+    background: linear-gradient(135deg, #4a0000, #1a0000);
+    box-shadow: 0 0 40px rgba(220, 20, 60, 0.5), 0 10px 30px rgba(0, 0, 0, 0.6);
 }
+
+.qr-card-ornament {
+    font-size: 1.5rem;
+    color: rgba(212, 175, 55, 0.6);
+    position: absolute;
+}
+.qr-card-ornament.top { top: 10px; }
+.qr-card-ornament.bottom { bottom: 10px; transform: rotate(180deg); }
 
 .qr-back-icon {
     font-size: 6rem;
-    margin-bottom: 8px;
-    text-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    margin-bottom: 4px;
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .qr-back-label {
     font-size: 1.8rem;
     letter-spacing: 4px;
     text-transform: uppercase;
-    text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+    font-weight: 900;
 }
 
 /* ─── Bottom Tray ──────────────────────────────────────────────────── */
@@ -198,35 +221,40 @@
 .qr-result {
     text-align: center;
     z-index: 10;
-    padding: 3rem;
+    padding: 3.5rem;
     border-radius: 20px;
-    background: rgba(12, 12, 18, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+    /* Parchment / dark rich background depending on result */
+    background: rgba(15, 10, 8, 0.95);
+    border: 2px solid #b8860b;
+    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.8), 0 20px 60px rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(16px);
-    animation: qrPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    animation: qrPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
     max-width: 90vw;
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
 }
 
 .qr-result-pass {
-    border-color: rgba(80, 200, 120, 0.4);
-    box-shadow: 0 0 60px rgba(80, 200, 120, 0.2), 0 15px 50px rgba(0, 0, 0, 0.5);
+    border-color: #d4af37;
+    background: radial-gradient(circle at center, rgba(11, 29, 58, 0.95), rgba(5, 10, 15, 0.98));
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 0 80px rgba(50, 120, 255, 0.2), 0 15px 50px rgba(0, 0, 0, 0.6);
 }
 
 .qr-result-fail {
-    border-color: rgba(220, 20, 60, 0.4);
-    box-shadow: 0 0 60px rgba(220, 20, 60, 0.2), 0 15px 50px rgba(0, 0, 0, 0.5);
+    border-color: #8b0000;
+    background: radial-gradient(circle at center, rgba(74, 0, 0, 0.95), rgba(15, 5, 5, 0.98));
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 0 80px rgba(220, 20, 60, 0.3), 0 15px 50px rgba(0, 0, 0, 0.6);
 }
 
 .qr-result-title {
-    font-size: 3.5rem;
+    font-size: 4rem;
     font-weight: 900;
     margin-bottom: 1.5rem;
-    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
+    letter-spacing: 2px;
 }
 
-.qr-result-pass .qr-result-title { color: var(--good-primary, #50c878); }
-.qr-result-fail .qr-result-title { color: var(--evil-primary, #dc143c); }
+.qr-result-pass .qr-result-title { color: #d4af37; } /* Gold text for success */
+.qr-result-fail .qr-result-title { color: #ff4d4d; } /* Bright red text for fail */
 
 .qr-result-counts {
     display: flex;
@@ -257,8 +285,8 @@
     letter-spacing: 2px;
 }
 
-.qr-clr-s { color: var(--good-primary, #50c878); }
-.qr-clr-f { color: var(--evil-primary, #dc143c); }
+.qr-clr-s { color: #87ceeb; } /* Sky blue contrast inside royal banner */
+.qr-clr-f { color: #ffc0cb; } /* Pink/red contrast inside dark banner */
 
 .qr-note {
     margin-top: 1.5rem;

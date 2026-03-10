@@ -5,21 +5,15 @@ import './QuestReveal.css';
 /*
  * QuestReveal — Full-screen overlay showing quest card results.
  *
- * Triggered by the dedicated 'quest-result' socket event (mirrors 'vote-result').
- * GameBoard renders this when showingResult === 'quest' && questResult.
- *
  * Flow: cards appear one by one (facedown → flip), then result banner.
  * No countdown, no delays — starts immediately on mount.
  *
- * Step timeline (each step = 1 second):
- *   step 0: card 0 slides up facedown
- *   step 1: card 0 flips to reveal
- *   step 2: card 1 slides up facedown
- *   step 3: card 1 flips to reveal
- *   ...
- *   step total*2: result banner appears
+ * Step timeline (Dynamic to build suspense):
+ *   - Each card appears facedown for 1.2s, except the FINAL card which waits 2.5s for drama!
+ *   - Flipped cards stay for 1.5s before moving to the tray / next card.
+ *   - Result banner appears after the final card.
  *
- * Server auto-advances everyone after total*2*1000 + 3500ms.
+ * Server auto-advances everyone smoothly.
  */
 
 export default function QuestReveal() {
@@ -40,23 +34,34 @@ export default function QuestReveal() {
     const RESULT_STEP = total * 2;
     const [step, setStep] = useState(0);
 
-    // Drive the animation with a simple 1-second interval
+    // Drive the animation with dynamic timeouts
     useEffect(() => {
-        if (total === 0) return;
+        if (total === 0 || step > RESULT_STEP) return;
 
-        const id = setInterval(() => {
-            setStep(prev => {
-                const next = prev + 1;
-                if (next > RESULT_STEP) {
-                    clearInterval(id);
-                    return RESULT_STEP;
-                }
-                return next;
-            });
-        }, 1000);
+        let delay = 0;
+        const isFacedownStep = step % 2 === 0;
+        const cardIndex = Math.floor(step / 2);
 
-        return () => clearInterval(id);
-    }, [total, RESULT_STEP]);
+        if (isFacedownStep && step < RESULT_STEP) {
+            // It's sliding up facedown.
+            // If it's the very last card (the suspense card), wait longer!
+            if (cardIndex === total - 1) {
+                delay = 2500;
+            } else {
+                delay = 1200;
+            }
+        } else if (!isFacedownStep && step < RESULT_STEP) {
+            // It just flipped. Wait before sliding the next one up.
+            delay = 1500;
+        }
+
+        if (delay > 0) {
+            const id = setTimeout(() => {
+                setStep(prev => prev + 1);
+            }, delay);
+            return () => clearTimeout(id);
+        }
+    }, [step, total, RESULT_STEP]);
 
     // Loading state (should rarely be seen since data is frozen at mount)
     if (total === 0) {
@@ -118,12 +123,17 @@ export default function QuestReveal() {
                         return (
                             <div key={i} className={`qr-card qr-card-${cs}`}>
                                 {cs === 'facedown' && (
-                                    <div className="qr-face qr-front">?</div>
+                                    <div className="qr-face qr-front">
+                                        <span className="qr-watermark">⚔️</span>
+                                        ?
+                                    </div>
                                 )}
                                 {cs === 'flipped' && (
                                     <div className={`qr-face qr-back qr-back-${action}`}>
+                                        <div className="qr-card-ornament top">⚜</div>
                                         <span className="qr-back-icon">{action === 'success' ? '✓' : '✗'}</span>
                                         <span className="qr-back-label">{action === 'success' ? 'SUCCESS' : 'FAIL'}</span>
+                                        <div className="qr-card-ornament bottom">⚜</div>
                                     </div>
                                 )}
                             </div>
