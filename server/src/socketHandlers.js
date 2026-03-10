@@ -328,13 +328,11 @@ function setupSocketHandlers(io, roomManager) {
                 const mapping = roomManager.getPlayerMapping(socket.id);
                 room.submitQuestAction(mapping.playerId, action);
 
-                // We emit the final count when checking all actions in below
-                if (!room.allQuestActionsIn()) {
-                    io.to(room.code).emit('quest-action-submitted', {
-                        submittedCount: Object.keys(room.questActions).length,
-                        totalTeamSize: room.proposedTeam.length,
-                    });
-                }
+                // Always emit the submitted count (mirrors vote-submitted pattern)
+                io.to(room.code).emit('quest-action-submitted', {
+                    submittedCount: Object.keys(room.questActions).length,
+                    totalTeamSize: room.proposedTeam.length,
+                });
 
                 // All actions in → resolve immediately (no delay)
                 if (room.allQuestActionsIn()) {
