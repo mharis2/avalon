@@ -281,7 +281,11 @@ class Room {
 
     // ─── Resolve Quest ─────────────────────────────────────────────
     resolveQuest() {
-        const actions = shuffle(Object.values(this.questActions));
+        const actions = Object.values(this.questActions).sort((a, b) => {
+            if (a === 'success' && b === 'fail') return -1;
+            if (a === 'fail' && b === 'success') return 1;
+            return 0;
+        });
         const result = evaluateQuest(actions, this.currentQuestIndex, this.players.length);
 
         this.questResults.push(result);
@@ -315,13 +319,11 @@ class Room {
             winState = { ...result, goToAssassination: false, gameOver: false };
         }
 
-        const revealActions = shuffle([...actions]);
-
         this.phase = PHASES.QUEST_REVEAL;
-        this.currentQuestReveal = { actions: revealActions, result: winState };
+        this.currentQuestReveal = { actions, result: winState };
 
         return {
-            actions: revealActions,
+            actions,
             result: winState,
             nextPhase,
         };
