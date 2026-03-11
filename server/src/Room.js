@@ -315,11 +315,13 @@ class Room {
             winState = { ...result, goToAssassination: false, gameOver: false };
         }
 
+        const revealActions = shuffle([...actions]);
+
         this.phase = PHASES.QUEST_REVEAL;
-        this.currentQuestReveal = { actions, result: winState };
+        this.currentQuestReveal = { actions: revealActions, result: winState };
 
         return {
-            actions,
+            actions: revealActions,
             result: winState,
             nextPhase,
         };

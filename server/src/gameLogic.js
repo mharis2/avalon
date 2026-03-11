@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const {
     PLAYER_DISTRIBUTION,
     QUEST_TEAM_SIZES,
@@ -8,11 +9,11 @@ const {
     ROLES,
 } = require('./constants');
 
-// ─── Shuffle (Fisher-Yates) ───────────────────────────────────────────
+// ─── Shuffle (Cryptographically Secure Fisher-Yates) ───────────────────────────────────────────
 function shuffle(arr) {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = crypto.randomInt(0, i + 1);
         [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
